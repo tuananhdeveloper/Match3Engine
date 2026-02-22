@@ -63,7 +63,6 @@ private:
     bool wouldCreateMatch(int row, int col, int itemType);
     bool hasVerticalMatchAt(int row, int col);
     bool hasHorizontalMatchAt(int row, int col);
-    bool swap(int row1, int col1, int row2, int col2);
     bool isInBounds(int row, int col);
     bool isAdjacent(int row1, int col1, int row2, int col2);
     bool wouldCreateMatchAfterSwap(int row1, int col1, int row2, int col2);
@@ -89,5 +88,6 @@ public:
     bool isTPattern(int row, int col, int left, int right, int up, int down);
     vector<MatchResult> findAllMatchesWithPatterns();
     int processCascadeWithSpecials();
+    bool swap(int row1, int col1, int row2, int col2);
 };
 #endif //MATCH3ENGINE_MATCH3_ENGINE_H
