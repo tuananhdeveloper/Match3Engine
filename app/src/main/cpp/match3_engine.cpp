@@ -4,11 +4,14 @@
 #include "match3_engine.h"
 #include <random>
 #include <iostream>
+#define LOG_TAG "Match3Engine"
+#ifdef __ANDROID__
 #include <android/log.h>
-#define LOG_TAG "Match3Engine" // Replace "MyAppTag" with your desired tag
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+    #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#else
+#include <iostream>
+#define LOGD(...) printf(__VA_ARGS__); printf("\n")
+#endif
 
 Match3Engine::Match3Engine(int width, int height, int itemTypes):
     width(width), height(height), itemTypes(itemTypes) {

@@ -1,15 +1,20 @@
 //
 // Created by Nguyễn Tuấn Anh on 15/2/26.
 //
+#ifdef __ANDROID__
 #include <android_native_app_glue.h>
+#endif
 #include "match3_engine.h"
 #include <iostream>
 #include <cassert>
+#define LOG_TAG "MyAppTag"
+#ifdef __ANDROID__
 #include <android/log.h>
-#define LOG_TAG "MyAppTag" // Replace "MyAppTag" with your desired tag
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+    #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#else
+#include <iostream>
+#define LOGD(...) printf(__VA_ARGS__); printf("\n")
+#endif
 
 void testHorizontalMatch() {
     Match3Engine engine(5, 5, 3);
@@ -168,7 +173,7 @@ void testLMatch() {
     auto match = engine.detectPatternAt(0, 2);
     if (match.pattern == MatchPattern::MATCH_L) {
         LOGD("✓ L-MATCH detected!\n");
-        LOGD("Cells: %d\n", match.cells.size());
+        LOGD("Cells: %zu\n", match.cells.size());
         engine.spawnSpecialCell(match);
         auto specialType = engine.getSpecialType(0, 2);
         assert(specialType == SpecialType::WRAPPED);
@@ -207,7 +212,7 @@ void test5Match() {
     auto match = engine.detectPatternAt(1, 2);
     if (match.pattern == MatchPattern::MATCH_5) {
         LOGD("✓ 5-MATCH detected!\n");
-        LOGD("Cells: %d\n", match.cells.size());
+        LOGD("Cells: %zu\n", match.cells.size());
         engine.spawnSpecialCell(match);
         auto specialType = engine.getSpecialType(1, 2);
         assert(specialType == SpecialType::COLOR_BOMB);
