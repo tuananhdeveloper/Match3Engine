@@ -1,15 +1,12 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id("com.android.library")
 }
 
 android {
     namespace 'com.tuananh.match3engine'
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.tuananh.match3engine"
         minSdk 24
         targetSdk 36
         versionCode 1
