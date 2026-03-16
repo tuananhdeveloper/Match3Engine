@@ -53,11 +53,11 @@ void setGrid(JNIEnv *env, jobject thiz,
 }
 
 static JNINativeMethod method_table[] = {
-        {"init", "(III)V", (void*)init},
+        {"nativeInit", "(III)V", (void*)init},
 
-        {"setGrid", "([III)V", (void*)setGrid},
+        {"nativeSetGrid", "([III)V", (void*)setGrid},
 
-        {"findAllMatches", "()[I", (jintArray*)findAllMatches}
+        {"nativeFindAllMatches", "()[I", (jintArray*)findAllMatches}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
@@ -65,8 +65,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
 
     const char* classNames[] = {
-            "com/tuananh/match3/bridge/DesktopNativeLib",
-            "com/tuananh/match3/bridge/AndroidNativeLib"
+            "com/tuananh/match3/lwjgl3/DesktopNativeEngine",
+            "com/tuananh/match3/android/AndroidNativeEngine"
     };
 
     for (int i = 0; i < 2; i++) {
