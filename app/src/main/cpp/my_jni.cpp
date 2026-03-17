@@ -2,6 +2,7 @@
 #include <set>
 #include <vector>
 #include "match3_engine.h"
+#include "jni_utils.h"
 
 Match3Engine* engine = nullptr;
 
@@ -80,5 +81,14 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
         }
     }
 
+    register_jni_type(env, JniType::MOVE, "com/tuananh/match3/bridge/Move", "<init>", "(IIII)V");
+
     return JNI_VERSION_1_6;
+}
+
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {
+    JNIEnv* env;
+    if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) == JNI_OK) {
+        clear_jni_cache(env);
+    }
 }
