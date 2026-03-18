@@ -13,26 +13,6 @@ void init(JNIEnv *env, jobject thiz,
     }
 }
 
-jintArray findAllMatches(JNIEnv *env, jobject thiz) {
-    if (!engine) {
-        return nullptr;
-    }
-    set<pair<int, int>> allMatches = engine->findAllMatches();
-    int arraySize = allMatches.size() * 2;
-    jintArray result = env->NewIntArray(arraySize);
-    if (result == nullptr) {
-        return nullptr;
-    }
-    vector<jint> buffer;
-    buffer.reserve(arraySize);
-    for (const auto &p: allMatches) {
-        buffer.push_back(p.first);
-        buffer.push_back(p.second);
-    }
-    env->SetIntArrayRegion(result, 0, arraySize, buffer.data());
-    return result;
-}
-
 void setGrid(JNIEnv *env, jobject thiz,
              jintArray flatData, jint rows, jint cols) {
     jint *data = env->GetIntArrayElements(flatData, nullptr);
@@ -53,18 +33,207 @@ void setGrid(JNIEnv *env, jobject thiz,
     engine->setGrid(grid);
 }
 
+jintArray findAllMatches(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return nullptr;
+    }
+    set<pair<int, int>> allMatches = engine->findAllMatches();
+    int arraySize = allMatches.size() * 2;
+    jintArray result = env->NewIntArray(arraySize);
+    if (result == nullptr) {
+        return nullptr;
+    }
+    vector<jint> buffer;
+    buffer.reserve(arraySize);
+    for (const auto &p: allMatches) {
+        buffer.push_back(p.first);
+        buffer.push_back(p.second);
+    }
+    env->SetIntArrayRegion(result, 0, arraySize, buffer.data());
+    return result;
+}
+
+int getItem(JNIEnv *env, jobject thiz, int row, int col) {
+    if (!engine) {
+        return -1;
+    }
+    return engine->getItem(col, row);
+}
+
+void applyGravity(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return;
+    }
+    engine->applyGravity();
+}
+
+int processCascade(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return -1;
+    }
+    return engine->processCascade();
+}
+
+bool hasValidMoves(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return false;
+    }
+    return engine->hasValidMoves();
+}
+
+void shuffleGrid(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return;
+    }
+    engine->shuffle();
+}
+
+int countValidMoves(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return -1;
+    }
+    return engine->countValidMoves();
+}
+
+jobject findHint(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return nullptr;
+    }
+    optional<Move> hint = engine->findHint();
+    if (!hint.has_value()) {
+        return nullptr;
+    }
+    jobject localObj = create_jni_object(env, JniType::MOVE, hint->row1, hint->col1, hint->row2, hint->col2);
+    return localObj;
+}
+
+jobject detectPatternAt(JNIEnv *env, jobject thiz, int row, int col) {
+    if (!engine) {
+        return nullptr;
+    }
+    MatchResult result = engine->detectPatternAt(row, col);
+    return create_jni_object(env, JniType::MATCH_RESULT,
+                             static_cast<int>(result.pattern),
+                             create_java_set_of_pairs(env, result.cells),
+                             create_java_pair(env, result.epicenter.first, result.epicenter.second),
+                             result.itemType);
+}
+
+int analyzeMatchPattern(JNIEnv *env, jobject thiz,
+                        int row, int col, int left, int right, int up, int down) {
+    if (!engine) {
+        return -1;
+    }
+    MatchPattern pattern = engine->analyzeMatchPattern(row, col, left, right, up, down);
+    return static_cast<int>(pattern);
+}
+
+void spawnSpecialCell(JNIEnv *env, jobject thiz, const MatchResult& match) {
+    if (!engine) {
+        return;
+    }
+    engine->spawnSpecialCell(match);
+}
+
+int getSpecialType(JNIEnv *env, jobject thiz, int row, int col) {
+    if (!engine) {
+        return -1;
+    }
+    return static_cast<int>(engine->getSpecialType(row, col));
+}
+
+int countConsecutive(JNIEnv *env, jobject thiz,
+                     int row, int col, int dx, int dy, int itemType) {
+    if (!engine) {
+        return -1;
+    }
+    return engine->countConsecutive(row, col, dx, dy, itemType);
+}
+
+bool isLPattern(JNIEnv *env, jobject thiz,
+                int row, int col, int left, int right, int up, int down) {
+    if (!engine) {
+        return false;
+    }
+    return engine->isLPattern(row, col, left, right, up, down);
+}
+
+bool isTPattern(JNIEnv *env, jobject thiz,
+                int row, int col, int left, int right, int up, int down) {
+    if (!engine) {
+        return false;
+    }
+    return engine->isLPattern(row, col, left, right, up, down);
+}
+
+jobjectArray findAllMatchesWithPatterns(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return nullptr;
+    }
+    jclass matchResultClass = g_jni_map[JniType::MATCH_RESULT].clazz;
+    vector<MatchResult> result = engine->findAllMatchesWithPatterns();
+    jobjectArray array = env->NewObjectArray(result.size(), matchResultClass, nullptr);
+    for (int i = 0; i < result.size(); i++) {
+        jobject item = create_jni_object(env, JniType::MATCH_RESULT,
+                                         static_cast<int>(result[i].pattern),
+                                         create_java_set_of_pairs(env, result[i].cells),
+                                         create_java_pair(env, result[i].epicenter.first, result[i].epicenter.second),
+                                         result[i].itemType);
+        env->SetObjectArrayElement(array, i, item);
+        env->DeleteLocalRef(item);
+    }
+    return array;
+}
+
+int processCascadeWithSpecials(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return -1;
+    }
+    return engine->processCascadeWithSpecials();
+}
+
+bool swapCells(JNIEnv *env, jobject thiz,
+          int row1, int col1, int row2, int col2) {
+    if (!engine) {
+        return false;
+    }
+    return engine->swap(row1, col1, row2, col2);
+}
+
 static JNINativeMethod method_table[] = {
         {"nativeInit", "(III)V", (void*)init},
-
         {"nativeSetGrid", "([III)V", (void*)setGrid},
-
-        {"nativeFindAllMatches", "()[I", (jintArray*)findAllMatches}
+        {"nativeFindAllMatches", "()[I", (void*)findAllMatches},
+        {"nativeGetItem", "(II)I", (void*)getItem},
+        {"nativeApplyGravity", "()V", (void*)applyGravity},
+        {"nativeProcessCascade", "()I", (void*)processCascade},
+        {"nativeHasValidMoves", "()Z", (void*)hasValidMoves},
+        {"nativeShuffle", "()V", (void*)shuffleGrid},
+        {"nativeCountValidMoves", "()I", (void*)countValidMoves},
+        {"nativeFindHint", "()Lcom/tuananh/match3/bridge/Move;", (void*)findHint},
+        {"nativeDetectPatternAt", "(II)Lcom/tuananh/match3/bridge/MatchResult;", (void*)detectPatternAt},
+        {"nativeAnalyzeMatchPattern", "(IIIIII)I", (void*)analyzeMatchPattern},
+        {"nativeSpawnSpecialCell", "(Lcom/tuananh/match3/bridge/MatchResult;)V", (void*)spawnSpecialCell},
+        {"nativeGetSpecialType", "(II)I", (void*)getSpecialType},
+        {"nativeCountConsecutive", "(IIIII)I", (void*) countConsecutive},
+        {"nativeIsLPattern", "(IIIIII)Z", (void*)isLPattern},
+        {"nativeIsTPattern", "(IIIIII)Z", (void*)isTPattern},
+        {"nativeFindAllMatchesWithPatterns", "()[Lcom/tuananh/match3/bridge/MatchResult;", (void*) findAllMatchesWithPatterns},
+        {"nativeProcessCascadeWithSpecials", "()I", (void*) processCascadeWithSpecials},
+        {"nativeSwap", "(IIII)Z", (void*)swapCells}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     JNIEnv* env;
     if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
 
+    register_jni_type(env, JniType::MOVE, "com/tuananh/match3/bridge/Move", "<init>", "(IIII)V");
+    register_jni_type(env, JniType::INIT_SET, "java/util/HashSet", "<init>", "()V");
+    register_jni_type(env, JniType::ADD_SET, "java/util/HashSet", "add", "(Ljava/lang/Object;)Z");
+    register_jni_type(env, JniType::INTEGER, "java/lang/Integer", "<init>", "(I)V");
+    register_jni_type(env, JniType::PAIR, "com/tuananh/match3/bridge/Pair", "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
+    register_jni_type(env, JniType::MATCH_RESULT, "com/tuananh/match3/bridge/MatchResult", "<init>",
+                      "(ILjava/util/Set;Lcom/tuananh/match3/bridge/Pair;I)V");
     const char* classNames[] = {
             "com/tuananh/match3/lwjgl3/DesktopNativeEngine",
             "com/tuananh/match3/android/AndroidNativeEngine"
@@ -80,8 +249,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
             env->RegisterNatives(clazz, method_table, sizeof(method_table) / sizeof(method_table[0]));
         }
     }
-
-    register_jni_type(env, JniType::MOVE, "com/tuananh/match3/bridge/Move", "<init>", "(IIII)V");
 
     return JNI_VERSION_1_6;
 }
