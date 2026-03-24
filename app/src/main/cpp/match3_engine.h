@@ -87,7 +87,7 @@ public:
     bool isLPattern(int row, int col, int left, int right, int up, int down);
     bool isTPattern(int row, int col, int left, int right, int up, int down);
     vector<MatchResult> findAllMatchesWithPatterns();
-    int processCascadeWithSpecials();
+    int processCascadeWithSpecials(bool isRefillingSmart = false);
     bool swap(int row1, int col1, int row2, int col2);
 };
 #endif //MATCH3ENGINE_MATCH3_ENGINE_H

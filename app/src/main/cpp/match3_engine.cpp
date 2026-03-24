@@ -82,14 +82,13 @@ MatchResult Match3Engine::detectPatternAt(int row, int col) {
     switch (result.pattern) {
         case MatchPattern::MATCH_5:
         case MatchPattern::MATCH_4_HORIZONTAL:
+        case MatchPattern::MATCH_4_VERTICAL:
         case MatchPattern::MATCH_3:
             if (horizontal >= 3) {
                 for (int i = col - left; i <= col + right; i++) {
                     result.cells.insert({row, i});
                 }
             }
-            break;
-        case MatchPattern::MATCH_4_VERTICAL:
             if (vertical >= 3) {
                 for (int i = row - up; i <= row + down; i++) {
                     result.cells.insert({i, col});
@@ -233,7 +232,7 @@ vector<MatchResult> Match3Engine::findAllMatchesWithPatterns() {
     return allMatches;
 }
 
-int Match3Engine::processCascadeWithSpecials() {
+int Match3Engine::processCascadeWithSpecials(bool isRefillingSmart) {
     int cascadeCount = 0;
     const int MAX_CASCADES = 100;
 
@@ -283,7 +282,12 @@ int Match3Engine::processCascadeWithSpecials() {
         }
 
         applyGravity();
-        refillSmart();
+        if (isRefillingSmart) {
+            refillSmart();
+        }
+        else {
+            refillFromTop();
+        }
     }
 
     return cascadeCount;
@@ -545,9 +549,6 @@ bool Match3Engine::swap(int row1, int col1, int row2, int col2) {
         std::swap(grid[row1][col1], grid[row2][col2]);
         return false;
     }
-
-    processCascade();
-
     return true;
 }
 
