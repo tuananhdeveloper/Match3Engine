@@ -21,12 +21,12 @@ void testHorizontalMatch() {
 
     // Setup known grid
     engine.setGrid({
-                           {0, 0, 0, 1, 2},
-                           {1, 2, 1, 2, 1},
-                           {2, 1, 2, 1, 2},
-                           {1, 2, 1, 2, 1},
-                           {2, 1, 2, 1, 2}
-                   });
+        {0, 0, 0, 1, 2},
+        {1, 2, 1, 2, 1},
+        {2, 1, 2, 1, 2},
+        {1, 2, 1, 2, 1},
+        {2, 1, 2, 1, 2}
+    });
 
     auto matches = engine.findAllMatches();
 
@@ -41,10 +41,10 @@ void testGravity() {
     Match3Engine engine(3, 3, 2);
 
     engine.setGrid({
-                           {0, -1,  1},  // A  .  B
-                           {-1, 1, -1},  // .  B  .
-                           {1,  0,  0}   // B  A  A
-                   });
+        {0, -1,  1},  // A  .  B
+        {-1, 1, -1},  // .  B  .
+        {1,  0,  0}   // B  A  A
+    });
     engine.applyGravity();
 
     // Expected result:
@@ -53,9 +53,9 @@ void testGravity() {
     // B  A  A
 
     // Column 0: [EMPTY, A, B]
-    assert(engine.getItem(0, 0) == -1);  // EMPTY
-    assert(engine.getItem(0, 1) == 0);   // A
-    assert(engine.getItem(0, 2) == 1);   // B ✓ STILL HERE!
+    assert(engine.getItem(0, 0) == -1);
+    assert(engine.getItem(0, 1) == 0);
+    assert(engine.getItem(0, 2) == 1);
 
     // Column 1: [EMPTY, B, A]
     assert(engine.getItem(1, 0) == -1);
@@ -74,13 +74,13 @@ void testCascade() {
     Match3Engine engine(6, 6, 4);
 
     engine.setGrid({
-                           {0, 0, 0, 1, 2, 3},
-                           {1, 2, 1, 2, 3, 1},
-                           {1, 3, 2, 3, 1, 2},
-                           {2, 1, 3, 1, 2, 3},
-                           {1, 2, 1, 2, 3, 1},
-                           {3, 1, 2, 3, 1, 2}
-                   });
+        {0, 0, 0, 1, 2, 3},
+        {1, 2, 1, 2, 3, 1},
+        {1, 3, 2, 3, 1, 2},
+        {2, 1, 3, 1, 2, 3},
+        {1, 2, 1, 2, 3, 1},
+        {3, 1, 2, 3, 1, 2}
+    });
     assert(engine.processCascade() == 1);
     LOGD("✓ Cascade test passed\n");
 }
@@ -88,16 +88,16 @@ void testCascade() {
 void testHasValidMoves() {
     Match3Engine engine(5, 3, 3);
     engine.setGrid({
-                           {0, 1, 0, 1, 2},  // A B A B C
-                           {1, 0, 1, 0, 1},  // B A B A B
-                           {2, 1, 2, 1, 0}   // C B C B A
-                   });
+        {0, 1, 0, 1, 2},  // A B A B C
+        {1, 0, 1, 0, 1},  // B A B A B
+        {2, 1, 2, 1, 0}   // C B C B A
+    });
 
     assert(engine.hasValidMoves() == true);
     LOGD("✓ Has valid moves\n");
 }
 
-void testNoValidMoves() { // no valid moves, small grid
+void testNoValidMoves() {
     Match3Engine engine(3, 3, 3);
     engine.setGrid({
         {2, 1, 0},
