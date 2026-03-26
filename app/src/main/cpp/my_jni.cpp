@@ -8,9 +8,7 @@ Match3Engine* engine = nullptr;
 
 void init(JNIEnv *env, jobject thiz,
           int width, int height, int itemTypes) {
-    if (engine == nullptr) {
-        engine = new Match3Engine(width, height, itemTypes);
-    }
+    engine = new Match3Engine(width, height, itemTypes);
 }
 
 void setGrid(JNIEnv *env, jobject thiz,
