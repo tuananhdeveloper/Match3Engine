@@ -397,7 +397,7 @@ void Match3Engine::applyGravity() {
                 // Move item to writePos
                 if (row != writePos) {
                     grid[writePos][col] = grid[row][col];
-                    grid[row][col] = EMPTY_CELL;
+                    grid[row][col].type = EMPTY_CELL;
                 }
                 writePos--;  // Next write position moves up
             }
@@ -427,7 +427,7 @@ void Match3Engine::refillSmart() {
                     }
                 }
                 while (wouldCreateMatch(row, col, newItem));
-                grid[row][col] = newItem;
+                grid[row][col].type = newItem;
             }
         }
     }
@@ -435,12 +435,12 @@ void Match3Engine::refillSmart() {
 
 bool Match3Engine::wouldCreateMatch(int row, int col, int itemType) {
     int originalItem = grid[row][col].type;
-    grid[row][col] = itemType;
+    grid[row][col].type = itemType;
 
     bool hasHorizontalMatch = hasHorizontalMatchAt(row, col);
     bool hasVerticalMatch = hasVerticalMatchAt(row, col);
 
-    grid[row][col] = originalItem;
+    grid[row][col].type = originalItem;
 
     return hasHorizontalMatch || hasVerticalMatch;
 }
@@ -507,7 +507,7 @@ void Match3Engine::refillFromTop() {
                 }
             }
             while (wouldCreateMatch(row, col, newItem));
-            grid[row][col] = newItem;
+            grid[row][col].type = newItem;
         }
     }
 }
@@ -531,7 +531,7 @@ int Match3Engine::processCascade() {
 
 void Match3Engine::removeMatches(const set<pair<int, int>> &matches) {
     for (const auto& [row, col]: matches) {
-        grid[row][col] = EMPTY_CELL;
+        grid[row][col].type = EMPTY_CELL;
     }
 }
 
@@ -608,7 +608,7 @@ void Match3Engine::shuffle() {
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
             if (grid[row][col].type != EMPTY_CELL) {
-                grid[row][col] = items[idx++];
+                grid[row][col].type = items[idx++];
             }
         }
     }
