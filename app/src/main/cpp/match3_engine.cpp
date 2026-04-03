@@ -232,7 +232,52 @@ vector<MatchResult> Match3Engine::findAllMatchesWithPatterns() {
     return allMatches;
 }
 
-int Match3Engine::processCascadeWithSpecials(bool isRefillingSmart) {
+void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(0, itemTypes);
+
+    for (int col = 0; col < width; col++) {
+        for (int destRow = height - 1; destRow >= 0; --destRow) {
+            if (grid[destRow][col].type != EMPTY_CELL) {
+                continue;
+            }
+            int srcRow = destRow - 1;
+            while (srcRow >= 0 && grid[srcRow][col].type == EMPTY_CELL) {
+                srcRow--;
+            }
+            if (srcRow >= 0) {
+                Cell cell = grid[srcRow][col];
+                grid[destRow][col] = cell;
+                grid[srcRow][col] = Cell(EMPTY_CELL);
+                if (writer) {
+                    writer->push8(static_cast<int>(EventType::FALL), srcRow, col, destRow, col,
+                                  cell.type, static_cast<int>(cell.specialType), 0);
+                }
+            }
+            else {
+                int newItem;
+                int attempts = 0;
+                do {
+                    newItem = dis(gen);
+                    attempts++;
+
+                    if (attempts >= MAX_ATTEMPTS) {
+                        break;
+                    }
+                }
+                while (wouldCreateMatch(destRow, col, newItem));
+                grid[destRow][col].type = newItem;
+                if (writer) {
+                    writer->push8(static_cast<int>(EventType::SPAWN), -1, col, destRow, col,
+                                  grid[destRow][col].type, static_cast<int>(grid[destRow][col].specialType), 0);
+                }
+            }
+        }
+    }
+}
+
+int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSmart, EventWriter* writer) {
     int cascadeCount = 0;
     const int MAX_CASCADES = 100;
 
@@ -281,12 +326,17 @@ int Match3Engine::processCascadeWithSpecials(bool isRefillingSmart) {
             }
         }
 
-        applyGravity();
-        if (isRefillingSmart) {
-            refillSmart();
+        if (!streaming) {
+            applyGravity(writer);
+            if (isRefillingSmart) {
+                refillSmart(writer);
+            }
+            else {
+                refillFromTop(writer);
+            }
         }
         else {
-            refillFromTop();
+            applyGravityAndRefillStream(writer);
         }
     }
 
@@ -386,7 +436,7 @@ set<pair<int, int>> Match3Engine::findAllMatches() {
     return allMatches;
 }
 
-void Match3Engine::applyGravity() {
+void Match3Engine::applyGravity(EventWriter* writer) {
     // Process mỗi column độc lập
     for (int col = 0; col < width; ++col) {
         int writePos = height - 1;  // Start from bottom
@@ -398,6 +448,10 @@ void Match3Engine::applyGravity() {
                 if (row != writePos) {
                     grid[writePos][col] = grid[row][col];
                     grid[row][col].type = EMPTY_CELL;
+                    if (writer) {
+                        writer->push8(static_cast<int>(EventType::FALL), row, col, writePos, col,
+                                     grid[writePos][col].type, static_cast<int>(grid[writePos][col].specialType), 0);
+                    }
                 }
                 writePos--;  // Next write position moves up
             }
@@ -405,7 +459,7 @@ void Match3Engine::applyGravity() {
     }
 }
 
-void Match3Engine::refillSmart() {
+void Match3Engine::refillSmart(EventWriter* writer) {
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> dis(0, itemTypes - 1);
@@ -428,6 +482,10 @@ void Match3Engine::refillSmart() {
                 }
                 while (wouldCreateMatch(row, col, newItem));
                 grid[row][col].type = newItem;
+                if (writer) {
+                    writer->push8(static_cast<int>(EventType::SPAWN), -1, col, row, col,
+                                 grid[row][col].type, static_cast<int>(grid[row][col].specialType), 0);
+                }
             }
         }
     }
@@ -481,7 +539,7 @@ bool Match3Engine::hasVerticalMatchAt(int row, int col) {
     return totalMatch >= 3;
 }
 
-void Match3Engine::refillFromTop() {
+void Match3Engine::refillFromTop(EventWriter* writer) {
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> dis(0, itemTypes);
@@ -508,6 +566,10 @@ void Match3Engine::refillFromTop() {
             }
             while (wouldCreateMatch(row, col, newItem));
             grid[row][col].type = newItem;
+            if (writer) {
+                writer->push8(static_cast<int>(EventType::SPAWN), -1, col, row, col,
+                             grid[row][col].type, static_cast<int>(grid[row][col].specialType), 0);
+            }
         }
     }
 }

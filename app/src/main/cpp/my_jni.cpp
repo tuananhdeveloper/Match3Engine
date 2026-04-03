@@ -198,6 +198,38 @@ bool swapCells(JNIEnv *env, jobject thiz,
     return engine->swap(row1, col1, row2, col2);
 }
 
+int swapCollectEvents(JNIEnv *env, jobject thiz,
+        int row1, int col1, int row2, int col2, jintArray outEvents) {
+    if (!engine) {
+        return -1;
+    }
+    jint *out = env->GetIntArrayElements(outEvents, NULL);
+    jsize capacity = env->GetArrayLength(outEvents);
+
+    EventWriter writer = EventWriter(out, (int)capacity);
+    bool ok = engine->swap(row1, col1, row2, col2);
+    if (ok) {
+        writer.push8(static_cast<int>(EventType::SWAP), row1, col1, row2, col2, -1, -1, 0);
+    }
+    env->ReleaseIntArrayElements(outEvents, out, 0);
+
+    return writer.length;
+}
+
+int stepCollectEvents(JNIEnv *env, jobject thiz, jboolean streaming, jintArray outEvents) {
+    if (!engine) {
+        return -1;
+    }
+    jint *out = env->GetIntArrayElements(outEvents, NULL);
+    jsize capacity = env->GetArrayLength(outEvents);
+
+    EventWriter* writer = new EventWriter(out, (int)capacity);
+    bool isStreaming = streaming == JNI_TRUE;
+    engine->processCascadeWithSpecials(isStreaming, false, writer);
+    env->ReleaseIntArrayElements(outEvents, out, 0);
+    return writer->length;
+}
+
 static JNINativeMethod method_table[] = {
         {"nativeInit", "(III)V", (void*)init},
         {"nativeSetGrid", "([III)V", (void*)setGrid},
@@ -218,7 +250,9 @@ static JNINativeMethod method_table[] = {
         {"nativeIsTPattern", "(IIIIII)Z", (void*)isTPattern},
         {"nativeFindAllMatchesWithPatterns", "()[Lcom/tuananh/match3/bridge/MatchResult;", (void*) findAllMatchesWithPatterns},
         {"nativeProcessCascadeWithSpecials", "()I", (void*) processCascadeWithSpecials},
-        {"nativeSwap", "(IIII)Z", (void*)swapCells}
+        {"nativeSwap", "(IIII)Z", (void*)swapCells},
+        {"nativeSwapCollectEvents", "(IIII[I)I", (void*)swapCollectEvents},
+        {"nativeStepCollectEvents", "(Z[I)I", (void*)stepCollectEvents}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {

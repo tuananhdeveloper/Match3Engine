@@ -45,6 +45,34 @@ struct MatchResult {
     int itemType;
 };
 
+enum class EventType {
+    SWAP,
+    FALL,
+    SPAWN
+};
+
+struct EventWriter {
+    int* out;
+    int capacity;
+    int length;
+    static const int STRIDE = 8;
+
+    EventWriter(int* out_, int cap_) : out(out_), capacity(cap_), length(0) {}
+
+    bool push8(int type, int row1, int col1, int row2, int col2, int item, int special, int flags) {
+        if (length + STRIDE > capacity) {
+            return false;
+        }
+        out[length++] = type;
+        out[length++] = row1; out[length++] = col1;
+        out[length++] = row2; out[length++] = col2;
+        out[length++] = item;
+        out[length++] = special;
+        out[length++] = flags;
+        return true;
+    }
+};
+
 class Match3Engine {
 private:
     int width;
@@ -57,8 +85,8 @@ private:
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
     set<pair<int, int>> findVerticalMatches(int col);
-    void refillSmart();
-    void refillFromTop();
+    void refillSmart(EventWriter* writer = nullptr);
+    void refillFromTop(EventWriter* writer = nullptr);
     void removeMatches(const set<pair<int, int>>& matches);
     bool wouldCreateMatch(int row, int col, int itemType);
     bool hasVerticalMatchAt(int row, int col);
@@ -67,13 +95,14 @@ private:
     bool isAdjacent(int row1, int col1, int row2, int col2);
     bool wouldCreateMatchAfterSwap(int row1, int col1, int row2, int col2);
     bool checkMatchAt(int row, int col);
+    void applyGravityAndRefillStream(EventWriter* writer);
 
 public:
     Match3Engine(int width, int height, int itemTypes);
     set<pair<int, int>> findAllMatches();
     void setGrid(vector<vector<Cell>> grid);
     int getItem(int col, int row);
-    void applyGravity();
+    void applyGravity(EventWriter* writer = nullptr);
     int processCascade();
     bool hasValidMoves();
     void shuffle();
@@ -87,7 +116,7 @@ public:
     bool isLPattern(int row, int col, int left, int right, int up, int down);
     bool isTPattern(int row, int col, int left, int right, int up, int down);
     vector<MatchResult> findAllMatchesWithPatterns();
-    int processCascadeWithSpecials(bool isRefillingSmart = false);
+    int processCascadeWithSpecials(bool streaming = false, bool isRefillingSmart = false, EventWriter* writer = nullptr);
     bool swap(int row1, int col1, int row2, int col2);
 };
 #endif //MATCH3ENGINE_MATCH3_ENGINE_H
