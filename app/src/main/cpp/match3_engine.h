@@ -78,9 +78,11 @@ private:
     int width;
     int height;
     int itemTypes;
+    int score = 0;
     vector<vector<Cell>> grid;
     const int EMPTY_CELL = -1;
     const int MAX_ATTEMPTS = 100;
+    const int BASE_POINTS_PER_CELL = 10;
 
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
@@ -118,5 +120,7 @@ public:
     vector<MatchResult> findAllMatchesWithPatterns();
     int processCascadeWithSpecials(bool streaming = false, bool isRefillingSmart = false, EventWriter* writer = nullptr);
     bool swap(int row1, int col1, int row2, int col2);
+    int getScore();
+    void reset();
 };
 #endif //MATCH3ENGINE_MATCH3_ENGINE_H

@@ -230,6 +230,20 @@ int stepCollectEvents(JNIEnv *env, jobject thiz, jboolean streaming, jintArray o
     return writer->length;
 }
 
+int getScore(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return -1;
+    }
+    return engine->getScore();
+}
+
+void reset(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return;
+    }
+    engine->reset();
+}
+
 static JNINativeMethod method_table[] = {
         {"nativeInit", "(III)V", (void*)init},
         {"nativeSetGrid", "([III)V", (void*)setGrid},
@@ -252,7 +266,9 @@ static JNINativeMethod method_table[] = {
         {"nativeProcessCascadeWithSpecials", "()I", (void*) processCascadeWithSpecials},
         {"nativeSwap", "(IIII)Z", (void*)swapCells},
         {"nativeSwapCollectEvents", "(IIII[I)I", (void*)swapCollectEvents},
-        {"nativeStepCollectEvents", "(Z[I)I", (void*)stepCollectEvents}
+        {"nativeStepCollectEvents", "(Z[I)I", (void*)stepCollectEvents},
+        {"nativeGetScore", "()I", (void*)getScore},
+        {"nativeReset", "()Z", (void*) reset}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {

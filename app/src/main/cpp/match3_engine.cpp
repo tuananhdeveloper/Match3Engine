@@ -287,6 +287,7 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
             break;
         }
         cascadeCount++;
+        score += matches.size() * BASE_POINTS_PER_CELL * cascadeCount;
 
         for (const auto& match: matches) {
             switch (match.pattern) {
@@ -583,6 +584,7 @@ int Match3Engine::processCascade() {
             break;
         }
         cascadeCount++;
+        score += matches.size() * BASE_POINTS_PER_CELL * cascadeCount;
         removeMatches(matches);
         applyGravity();
         refillFromTop();
@@ -731,4 +733,12 @@ optional<Move> Match3Engine::findHint() {
     }
 
     return nullopt;
+}
+
+int Match3Engine::getScore() {
+    return score;
+}
+
+void Match3Engine::reset() {
+    score = 0;
 }
