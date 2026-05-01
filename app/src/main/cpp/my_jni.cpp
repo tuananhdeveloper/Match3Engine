@@ -268,7 +268,7 @@ static JNINativeMethod method_table[] = {
         {"nativeSwapCollectEvents", "(IIII[I)I", (void*)swapCollectEvents},
         {"nativeStepCollectEvents", "(Z[I)I", (void*)stepCollectEvents},
         {"nativeGetScore", "()I", (void*)getScore},
-        {"nativeReset", "()Z", (void*) reset}
+        {"nativeReset", "()V", (void*)reset}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {

@@ -15,6 +15,10 @@
 
 Match3Engine::Match3Engine(int width, int height, int itemTypes):
     width(width), height(height), itemTypes(itemTypes) {
+    initBoard();
+}
+
+void Match3Engine::initBoard() {
     grid.resize(height, vector<Cell>(width));
 
     random_device rd;
@@ -740,5 +744,9 @@ int Match3Engine::getScore() {
 }
 
 void Match3Engine::reset() {
+    initBoard();
+    while (!findAllMatches().empty()) {
+        shuffle();
+    }
     score = 0;
 }

@@ -98,6 +98,7 @@ private:
     bool wouldCreateMatchAfterSwap(int row1, int col1, int row2, int col2);
     bool checkMatchAt(int row, int col);
     void applyGravityAndRefillStream(EventWriter* writer);
+    void initBoard();
 
 public:
     Match3Engine(int width, int height, int itemTypes);
