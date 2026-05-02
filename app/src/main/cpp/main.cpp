@@ -17,7 +17,7 @@
 #endif
 
 void testHorizontalMatch() {
-    Match3Engine engine(5, 5, 3);
+    Match3Engine engine(5, 5, {0, 1, 2});
 
     // Setup known grid
     engine.setGrid({
@@ -38,7 +38,7 @@ void testHorizontalMatch() {
 }
 
 void testGravity() {
-    Match3Engine engine(3, 3, 2);
+    Match3Engine engine(3, 3, {0, 1});
 
     engine.setGrid({
         {0, -1,  1},  // A  .  B
@@ -71,7 +71,7 @@ void testGravity() {
 }
 
 void testCascade() {
-    Match3Engine engine(6, 6, 4);
+    Match3Engine engine(6, 6, {0, 1, 2, 3});
 
     engine.setGrid({
         {0, 0, 0, 1, 2, 3},
@@ -86,7 +86,7 @@ void testCascade() {
 }
 
 void testHasValidMoves() {
-    Match3Engine engine(5, 3, 3);
+    Match3Engine engine(5, 3, {0, 1, 2});
     engine.setGrid({
         {0, 1, 0, 1, 2},  // A B A B C
         {1, 0, 1, 0, 1},  // B A B A B
@@ -98,7 +98,7 @@ void testHasValidMoves() {
 }
 
 void testNoValidMoves() {
-    Match3Engine engine(3, 3, 3);
+    Match3Engine engine(3, 3, {0, 1, 2});
     engine.setGrid({
         {2, 1, 0},
         {0, 1, 2},
@@ -109,7 +109,7 @@ void testNoValidMoves() {
 }
 
 void testMultipleValidMoves() {
-    Match3Engine engine(5, 5, 3);
+    Match3Engine engine(5, 5, {0, 1, 2});
     engine.setGrid({
        {0, 1, 0, 1, 2},
        {1, 0, 0, 2, 1},
@@ -125,7 +125,7 @@ void testMultipleValidMoves() {
 }
 
 void testFindHint() {
-    Match3Engine engine(5, 5, 3);
+    Match3Engine engine(5, 5, {0, 1, 2});
     engine.setGrid({
         {0, 1, 0, 1, 2},
         {1, 0, 1, 0, 1},
@@ -140,7 +140,7 @@ void testFindHint() {
 }
 
 void testFourMatchHorizontal() {
-    Match3Engine engine(6, 5, 3);
+    Match3Engine engine(6, 5, {0, 1, 2});
     engine.setGrid({
         {1, 2, 1, 2, 1, 2},
         {0, 0, 0, 0, 2, 1},
@@ -162,7 +162,7 @@ void testFourMatchHorizontal() {
 }
 
 void testLMatch() {
-    Match3Engine engine(5, 5, 3);
+    Match3Engine engine(5, 5, {0, 1, 2});
     engine.setGrid({
         {0, 0, 0, 1, 2},
         {2, 1, 0, 2, 1},
@@ -182,7 +182,7 @@ void testLMatch() {
 }
 
 void testTMatch() {
-    Match3Engine engine(5, 5, 3);
+    Match3Engine engine(5, 5, {0, 1, 2});
     engine.setGrid({
         {1, 2, 0, 1, 2},
         {2, 1, 0, 2, 1},
@@ -201,7 +201,7 @@ void testTMatch() {
 }
 
 void test5Match() {
-    Match3Engine engine(7, 5, 3);
+    Match3Engine engine(7, 5, {0, 1, 2});
     engine.setGrid({
         {1, 2, 1, 2, 1, 2, 1},
         {0, 0, 0, 0, 0, 1, 2},
@@ -221,7 +221,7 @@ void test5Match() {
 }
 
 void testCascadeWithSpecials() {
-    Match3Engine engine(6, 6, 4);
+    Match3Engine engine(6, 6, {0, 1, 2, 3});
     engine.setGrid({
         {0, 0, 0, 0, 1, 2},
         {1, 2, 1, 2, 3, 1},
@@ -264,7 +264,7 @@ void testCascadeWithSpecials() {
 }
 
 void testShuffle() {
-    Match3Engine engine(3, 3, 3);
+    Match3Engine engine(3, 3, {0, 1, 2});
     engine.setGrid({
         {2, 1, 0},
         {0, 1, 2},

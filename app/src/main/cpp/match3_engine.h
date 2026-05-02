@@ -77,7 +77,7 @@ class Match3Engine {
 private:
     int width;
     int height;
-    int itemTypes;
+    vector<int> itemTypes;
     int score = 0;
     vector<vector<Cell>> grid;
     const int EMPTY_CELL = -1;
@@ -101,7 +101,7 @@ private:
     void initBoard();
 
 public:
-    Match3Engine(int width, int height, int itemTypes);
+    Match3Engine(int width, int height, vector<int> itemTypes);
     set<pair<int, int>> findAllMatches();
     void setGrid(vector<vector<Cell>> grid);
     int getItem(int col, int row);

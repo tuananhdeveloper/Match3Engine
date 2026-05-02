@@ -7,8 +7,13 @@
 Match3Engine* engine = nullptr;
 
 void init(JNIEnv *env, jobject thiz,
-          int width, int height, int itemTypes) {
-    engine = new Match3Engine(width, height, itemTypes);
+          int width, int height, jintArray itemTypes) {
+    jsize len = env->GetArrayLength(itemTypes);
+    jint *body = env->GetIntArrayElements(itemTypes, 0);
+    std::vector<int> myVector(body, body + len);
+    env->ReleaseIntArrayElements(itemTypes, body, 0);
+
+    engine = new Match3Engine(width, height, myVector);
 }
 
 void setGrid(JNIEnv *env, jobject thiz,
@@ -245,7 +250,7 @@ void reset(JNIEnv *env, jobject thiz) {
 }
 
 static JNINativeMethod method_table[] = {
-        {"nativeInit", "(III)V", (void*)init},
+        {"nativeInit", "(II[I)V", (void*)init},
         {"nativeSetGrid", "([III)V", (void*)setGrid},
         {"nativeFindAllMatches", "()[I", (void*)findAllMatches},
         {"nativeGetItem", "(II)I", (void*)getItem},

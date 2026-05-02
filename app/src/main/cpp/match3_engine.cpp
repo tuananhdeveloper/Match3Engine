@@ -13,7 +13,7 @@
 #define LOGD(...) printf(__VA_ARGS__); printf("\n")
 #endif
 
-Match3Engine::Match3Engine(int width, int height, int itemTypes):
+Match3Engine::Match3Engine(int width, int height, vector<int> itemTypes):
     width(width), height(height), itemTypes(itemTypes) {
     initBoard();
 }
@@ -23,11 +23,11 @@ void Match3Engine::initBoard() {
 
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, itemTypes - 1);
+    uniform_int_distribution<> dis(0, itemTypes.size() - 1);
 
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
-            grid[row][col].type = dis(gen);
+            grid[row][col].type = itemTypes[dis(gen)];
             grid[row][col].specialType = SpecialType::NONE;
         }
     }
@@ -239,7 +239,7 @@ vector<MatchResult> Match3Engine::findAllMatchesWithPatterns() {
 void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, itemTypes);
+    uniform_int_distribution<> dis(0, itemTypes.size() - 1);
 
     for (int col = 0; col < width; col++) {
         for (int destRow = height - 1; destRow >= 0; --destRow) {
@@ -263,7 +263,7 @@ void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
                 int newItem;
                 int attempts = 0;
                 do {
-                    newItem = dis(gen);
+                    newItem = itemTypes[dis(gen)];
                     attempts++;
 
                     if (attempts >= MAX_ATTEMPTS) {
@@ -467,7 +467,7 @@ void Match3Engine::applyGravity(EventWriter* writer) {
 void Match3Engine::refillSmart(EventWriter* writer) {
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, itemTypes - 1);
+    uniform_int_distribution<> dis(0, itemTypes.size() - 1);
 
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
@@ -476,7 +476,7 @@ void Match3Engine::refillSmart(EventWriter* writer) {
                 int attempts = 0;
 
                 do {
-                    newItem = dis(gen);
+                    newItem = itemTypes[dis(gen)];
                     attempts++;
 
                     if (attempts >= MAX_ATTEMPTS) {
@@ -547,7 +547,7 @@ bool Match3Engine::hasVerticalMatchAt(int row, int col) {
 void Match3Engine::refillFromTop(EventWriter* writer) {
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, itemTypes);
+    uniform_int_distribution<> dis(0, itemTypes.size() - 1);
 
     for (int col = 0; col < width; col++) {
         int emptyCount = 0;
@@ -562,7 +562,7 @@ void Match3Engine::refillFromTop(EventWriter* writer) {
             int newItem;
             int attempts = 0;
             do {
-                newItem = dis(gen);
+                newItem = itemTypes[dis(gen)];
                 attempts++;
 
                 if (attempts >= MAX_ATTEMPTS) {
