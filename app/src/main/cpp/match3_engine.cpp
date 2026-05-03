@@ -719,6 +719,9 @@ bool Match3Engine::wouldCreateMatchAfterSwap(int row1, int col1, int row2, int c
 }
 
 bool Match3Engine::checkMatchAt(int row, int col) {
+    if (grid[row][col].type == holeItemId) {
+        return false;
+    }
     return hasHorizontalMatchAt(row, col) || hasVerticalMatchAt(row, col);
 }
 
