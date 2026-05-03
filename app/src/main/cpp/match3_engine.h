@@ -14,11 +14,11 @@ struct Move {
 };
 
 enum class SpecialType {
-    NONE,
-    STRIPED_HORIZONTAL,
-    STRIPED_VERTICAL,
-    WRAPPED,
-    COLOR_BOMB
+    NONE = -1,
+    STRIPED_VERTICAL = 6, // Vertical Drip Filter
+    STRIPED_HORIZONTAL = 7, // Horizontal Drip Filter
+    COLOR_BOMB = 8, // Ultimate Espresso Machine
+    WRAPPED = 9 // Coffee Shaker
 };
 
 enum class MatchPattern {
