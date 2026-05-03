@@ -28,7 +28,7 @@ void Match3Engine::initBoard() {
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
             grid[row][col].type = itemTypes[dis(gen)];
-            grid[row][col].specialType = SpecialType::NONE;
+            grid[row][col].specialType = mSpecialType.NONE;
         }
     }
 }
@@ -40,9 +40,9 @@ int Match3Engine::getItem(int col, int row) {
     return grid[row][col].type;
 }
 
-SpecialType Match3Engine::getSpecialType(int row, int col) {
+int Match3Engine::getSpecialType(int row, int col) {
     if (!isInBounds(row, col)) {
-        return SpecialType::NONE;
+        return mSpecialType.NONE;
     }
     return grid[row][col].specialType;
 }
@@ -191,26 +191,26 @@ void Match3Engine::spawnSpecialCell(const MatchResult &match) {
     if (!isInBounds(erow, ecol)) {
         return;
     }
-    SpecialType specialType = SpecialType::NONE;
+    int type = mSpecialType.NONE;
     switch (match.pattern) {
         case MatchPattern::MATCH_4_HORIZONTAL:
-            specialType = SpecialType::STRIPED_HORIZONTAL;
+            type = mSpecialType.STRIPED_HORIZONTAL;
             break;
         case MatchPattern::MATCH_4_VERTICAL:
-            specialType = SpecialType::STRIPED_VERTICAL;
+            type = mSpecialType.STRIPED_VERTICAL;
             break;
         case MatchPattern::MATCH_5:
-            specialType = SpecialType::COLOR_BOMB;
+            type = mSpecialType.COLOR_BOMB;
             break;
         case MatchPattern::MATCH_L:
         case MatchPattern::MATCH_T:
-            specialType = SpecialType::WRAPPED;
+            type = mSpecialType.WRAPPED;
             break;
         default:
             break;
     }
     grid[erow][ecol].type = match.itemType;
-    grid[erow][ecol].specialType = specialType;
+    grid[erow][ecol].specialType = type;
 }
 
 vector<MatchResult> Match3Engine::findAllMatchesWithPatterns() {
@@ -320,7 +320,7 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
             for (const auto& cell: match.cells) {
                 if (cell.first != match.epicenter.first || cell.second != match.epicenter.second) {
                     grid[cell.first][cell.second].type = EMPTY_CELL;
-                    grid[cell.first][cell.second].specialType = SpecialType::NONE;
+                    grid[cell.first][cell.second].specialType = mSpecialType.NONE;
                 }
             }
 
@@ -749,4 +749,16 @@ void Match3Engine::reset() {
         shuffle();
     }
     score = 0;
+}
+
+void Match3Engine::updateSpecialType(int stripedVertical, int stripedHorizontal, int colorBomb,
+                                     int wrapped) {
+    mSpecialType.STRIPED_VERTICAL = stripedVertical;
+    mSpecialType.STRIPED_HORIZONTAL = stripedHorizontal;
+    mSpecialType.COLOR_BOMB = colorBomb;
+    mSpecialType.WRAPPED = wrapped;
+}
+
+void Match3Engine::setHoleItemId(int holeItemId) {
+    this->holeItemId = holeItemId;
 }

@@ -13,12 +13,12 @@ struct Move {
     int row1, col1, row2, col2;
 };
 
-enum class SpecialType {
-    NONE = -1,
-    STRIPED_VERTICAL = 6, // Vertical Drip Filter
-    STRIPED_HORIZONTAL = 7, // Horizontal Drip Filter
-    COLOR_BOMB = 8, // Ultimate Espresso Machine
-    WRAPPED = 9 // Coffee Shaker
+struct SpecialType {
+    int NONE = -1;
+    int STRIPED_VERTICAL = 0;
+    int STRIPED_HORIZONTAL = 1;
+    int COLOR_BOMB = 2;
+    int WRAPPED = 3;
 };
 
 enum class MatchPattern {
@@ -33,9 +33,9 @@ enum class MatchPattern {
 
 struct Cell {
     int type;
-    SpecialType specialType;
-    Cell() : type(-1), specialType(SpecialType::NONE) {}
-    Cell(int t) : type(t), specialType(SpecialType::NONE) {}
+    int specialType;
+    Cell() : type(-1), specialType(-1) {}
+    Cell(int t) : type(t), specialType(-1) {}
 };
 
 struct MatchResult {
@@ -83,6 +83,8 @@ private:
     const int EMPTY_CELL = -1;
     const int MAX_ATTEMPTS = 100;
     const int BASE_POINTS_PER_CELL = 10;
+    SpecialType mSpecialType;
+    int holeItemId;
 
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
@@ -104,6 +106,11 @@ public:
     Match3Engine(int width, int height, vector<int> itemTypes);
     set<pair<int, int>> findAllMatches();
     void setGrid(vector<vector<Cell>> grid);
+    void updateSpecialType(int stripedVertical, int stripedHorizontal, int colorBomb, int wrapped);
+    void setHoleItemId(int holeItemId);
+    SpecialType getSpecialType() {
+        return mSpecialType;
+    };
     int getItem(int col, int row);
     void applyGravity(EventWriter* writer = nullptr);
     int processCascade();
@@ -114,7 +121,7 @@ public:
     MatchResult detectPatternAt(int row, int col);
     MatchPattern analyzeMatchPattern(int row, int col, int left, int right, int up, int down);
     void spawnSpecialCell(const MatchResult& match);
-    SpecialType getSpecialType(int row, int col);
+    int getSpecialType(int row, int col);
     int countConsecutive(int row, int col, int dx, int dy, int itemType);
     bool isLPattern(int row, int col, int left, int right, int up, int down);
     bool isTPattern(int row, int col, int left, int right, int up, int down);

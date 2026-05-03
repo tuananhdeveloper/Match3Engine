@@ -28,7 +28,7 @@ void setGrid(JNIEnv *env, jobject thiz,
     for (int row = 0; row < rows; row++) {
         for (int col = 0; col < cols; col++) {
             grid[row][col].type = data[index++];
-            grid[row][col].specialType = static_cast<SpecialType>(data[index++]);
+            grid[row][col].specialType = data[index++];
         }
     }
 
@@ -249,6 +249,21 @@ void reset(JNIEnv *env, jobject thiz) {
     engine->reset();
 }
 
+void updateSpecialType(JNIEnv *env, jobject thiz, int stripedVertical, int stripedHorizontal, int colorBomb,
+                       int wrapped) {
+    if (!engine) {
+        return;
+    }
+    engine->updateSpecialType(stripedVertical, stripedHorizontal, colorBomb, wrapped);
+}
+
+void setHoleItemId(JNIEnv *env, jobject thiz, int id) {
+    if (!engine) {
+        return;
+    }
+    engine->setHoleItemId(id);
+}
+
 static JNINativeMethod method_table[] = {
         {"nativeInit", "(II[I)V", (void*)init},
         {"nativeSetGrid", "([III)V", (void*)setGrid},
@@ -273,7 +288,9 @@ static JNINativeMethod method_table[] = {
         {"nativeSwapCollectEvents", "(IIII[I)I", (void*)swapCollectEvents},
         {"nativeStepCollectEvents", "(Z[I)I", (void*)stepCollectEvents},
         {"nativeGetScore", "()I", (void*)getScore},
-        {"nativeReset", "()V", (void*)reset}
+        {"nativeReset", "()V", (void*)reset},
+        {"nativeUpdateSpecialType", "(IIII)V", (void*)updateSpecialType},
+        {"nativeSetHoleItemId", "(I)V", (void*)setHoleItemId}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {

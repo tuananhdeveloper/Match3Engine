@@ -151,9 +151,9 @@ void testFourMatchHorizontal() {
     auto match = engine.detectPatternAt(1, 1);
     if (match.pattern == MatchPattern::MATCH_4_HORIZONTAL) {
         engine.spawnSpecialCell(match);
-        auto specialType = engine.getSpecialType(match.epicenter.first,
+        auto type = engine.getSpecialType(match.epicenter.first,
                                                  match.epicenter.second);
-        assert(specialType == SpecialType::STRIPED_HORIZONTAL);
+        assert(type == engine.getSpecialType().STRIPED_HORIZONTAL);
         LOGD("✓ Striped Horizontal candy spawned!\n");
     }
     else {
@@ -175,8 +175,8 @@ void testLMatch() {
         LOGD("✓ L-MATCH detected!\n");
         LOGD("Cells: %zu\n", match.cells.size());
         engine.spawnSpecialCell(match);
-        auto specialType = engine.getSpecialType(0, 2);
-        assert(specialType == SpecialType::WRAPPED);
+        auto type = engine.getSpecialType(0, 2);
+        assert(type == engine.getSpecialType().WRAPPED);
         LOGD("✓ Wrapped candy spawned!\n");
     }
 }
@@ -194,8 +194,8 @@ void testTMatch() {
     if (match.pattern == MatchPattern::MATCH_T) {
         LOGD("✓ T-MATCH detected!\n");
         engine.spawnSpecialCell(match);
-        auto specialType = engine.getSpecialType(2, 2);
-        assert(specialType == SpecialType::WRAPPED);
+        auto type = engine.getSpecialType(2, 2);
+        assert(type == engine.getSpecialType().WRAPPED);
         LOGD("✓ Wrapped candy spawned!\n");
     }
 }
@@ -214,8 +214,8 @@ void test5Match() {
         LOGD("✓ 5-MATCH detected!\n");
         LOGD("Cells: %zu\n", match.cells.size());
         engine.spawnSpecialCell(match);
-        auto specialType = engine.getSpecialType(1, 2);
-        assert(specialType == SpecialType::COLOR_BOMB);
+        auto type = engine.getSpecialType(1, 2);
+        assert(type == engine.getSpecialType().COLOR_BOMB);
         LOGD("✓ Color Bomb spawned!\n");
     }
 }
@@ -233,32 +233,19 @@ void testCascadeWithSpecials() {
     int cascades = engine.processCascadeWithSpecials();
 
     bool foundSpecial = false;
+    int type = -1;
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 6; col++) {
-            if (engine.getSpecialType(row, col) != SpecialType::NONE) {
+            if (engine.getSpecialType(row, col) != engine.getSpecialType().NONE) {
                 foundSpecial = true;
-                switch (engine.getSpecialType(row, col)) {
-                    case SpecialType::STRIPED_HORIZONTAL:
-                        LOGD("STRIPED_HORIZONTAL\n");
-                        break;
-                    case SpecialType::STRIPED_VERTICAL:
-                        LOGD("STRIPED_VERTICAL\n");
-                        break;
-                    case SpecialType::WRAPPED:
-                        LOGD("WRAPPED\n");
-                        break;
-                    case SpecialType::COLOR_BOMB:
-                        LOGD("COLOR_BOMB\n");
-                        break;
-                    default:
-                        break;
-                }
+                type = engine.getSpecialType(row, col);
             }
         }
     }
 
     if (foundSpecial) {
         LOGD("Cascades: %d", cascades);
+        LOGD("Special Type: %d", type);
         LOGD("✓ Special candies created successfully!\n");
     }
 }
