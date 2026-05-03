@@ -230,7 +230,7 @@ int stepCollectEvents(JNIEnv *env, jobject thiz, jboolean streaming, jintArray o
 
     EventWriter* writer = new EventWriter(out, (int)capacity);
     bool isStreaming = streaming == JNI_TRUE;
-    engine->processCascadeWithSpecials(isStreaming, false, writer);
+    engine->processCascadeWithSpecials(isStreaming, writer);
     env->ReleaseIntArrayElements(outEvents, out, 0);
     return writer->length;
 }
@@ -257,11 +257,11 @@ void updateSpecialType(JNIEnv *env, jobject thiz, int stripedVertical, int strip
     engine->updateSpecialType(stripedVertical, stripedHorizontal, colorBomb, wrapped);
 }
 
-void setHoleItemId(JNIEnv *env, jobject thiz, int id) {
+void setHoleItemId(JNIEnv *env, jobject thiz, int itemId) {
     if (!engine) {
         return;
     }
-    engine->setHoleItemId(id);
+    engine->setHoleItemId(itemId);
 }
 
 static JNINativeMethod method_table[] = {

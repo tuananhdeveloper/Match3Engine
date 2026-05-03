@@ -245,7 +245,6 @@ void testCascadeWithSpecials() {
 
     if (foundSpecial) {
         LOGD("Cascades: %d", cascades);
-        LOGD("Special Type: %d", type);
         LOGD("✓ Special candies created successfully!\n");
     }
 }

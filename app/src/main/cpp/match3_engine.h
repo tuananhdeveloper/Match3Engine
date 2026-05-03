@@ -80,11 +80,12 @@ private:
     vector<int> itemTypes;
     int score = 0;
     vector<vector<Cell>> grid;
+    vector<vector<Cell>> originalGrid;
     const int EMPTY_CELL = -1;
     const int MAX_ATTEMPTS = 100;
     const int BASE_POINTS_PER_CELL = 10;
     SpecialType mSpecialType;
-    int holeItemId;
+    int holeItemId = -1;
 
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
@@ -100,7 +101,6 @@ private:
     bool wouldCreateMatchAfterSwap(int row1, int col1, int row2, int col2);
     bool checkMatchAt(int row, int col);
     void applyGravityAndRefillStream(EventWriter* writer);
-    void initBoard();
 
 public:
     Match3Engine(int width, int height, vector<int> itemTypes);

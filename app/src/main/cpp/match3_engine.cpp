@@ -15,10 +15,6 @@
 
 Match3Engine::Match3Engine(int width, int height, vector<int> itemTypes):
     width(width), height(height), itemTypes(itemTypes) {
-    initBoard();
-}
-
-void Match3Engine::initBoard() {
     grid.resize(height, vector<Cell>(width));
 
     random_device rd;
@@ -67,7 +63,7 @@ MatchResult Match3Engine::detectPatternAt(int row, int col) {
     result.epicenter = {-1, -1};
 
     int itemType = grid[row][col].type;
-    if (itemType == EMPTY_CELL) {
+    if (itemType == EMPTY_CELL || itemType == holeItemId) {
         return result;
     }
 
@@ -331,7 +327,11 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
             }
         }
 
-        if (!streaming) {
+        if (holeItemId > 0) {
+            applyGravity(writer);
+            refillSmart(writer);
+        }
+        else if (!streaming) {
             applyGravity(writer);
             if (isRefillingSmart) {
                 refillSmart(writer);
@@ -350,6 +350,7 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
 
 void Match3Engine::setGrid(vector<vector<Cell>> grid)  {
     this->grid = grid;
+    this->originalGrid = grid;
 }
 
 set<pair<int, int>> Match3Engine::findHorizontalMatches(int row) {
@@ -450,7 +451,8 @@ void Match3Engine::applyGravity(EventWriter* writer) {
         for (int row = height - 1; row >= 0; --row) {
             if (grid[row][col].type != EMPTY_CELL) {
                 // Move item to writePos
-                if (row != writePos) {
+                if (row != writePos && grid[row][col].type != holeItemId
+                        && grid[writePos][col].type != holeItemId) {
                     grid[writePos][col] = grid[row][col];
                     grid[row][col].type = EMPTY_CELL;
                     if (writer) {
@@ -485,10 +487,10 @@ void Match3Engine::refillSmart(EventWriter* writer) {
                         break;
                     }
                 }
-                while (wouldCreateMatch(row, col, newItem));
+                while (newItem == holeItemId || wouldCreateMatch(row, col, newItem));
                 grid[row][col].type = newItem;
                 if (writer) {
-                    writer->push8(static_cast<int>(EventType::SPAWN), -1, col, row, col,
+                    writer->push8(static_cast<int>(EventType::SPAWN), row, col, row, col,
                                  grid[row][col].type, static_cast<int>(grid[row][col].specialType), 0);
                 }
             }
@@ -659,7 +661,7 @@ void Match3Engine::shuffle() {
     vector<int> items;
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
-            if (grid[row][col].type != EMPTY_CELL) {
+            if (grid[row][col].type != EMPTY_CELL && grid[row][col].type != holeItemId) {
                 items.push_back(grid[row][col].type);
             }
         }
@@ -675,7 +677,7 @@ void Match3Engine::shuffle() {
     int idx = 0;
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
-            if (grid[row][col].type != EMPTY_CELL) {
+            if (grid[row][col].type != EMPTY_CELL && grid[row][col].type != holeItemId) {
                 grid[row][col].type = items[idx++];
             }
         }
@@ -744,10 +746,7 @@ int Match3Engine::getScore() {
 }
 
 void Match3Engine::reset() {
-    initBoard();
-    while (!findAllMatches().empty()) {
-        shuffle();
-    }
+    this->grid = originalGrid;
     score = 0;
 }
 
@@ -759,6 +758,6 @@ void Match3Engine::updateSpecialType(int stripedVertical, int stripedHorizontal,
     mSpecialType.WRAPPED = wrapped;
 }
 
-void Match3Engine::setHoleItemId(int holeItemId) {
-    this->holeItemId = holeItemId;
+void Match3Engine::setHoleItemId(int id) {
+    this->holeItemId = id;
 }
