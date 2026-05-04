@@ -261,10 +261,6 @@ vector<MatchResult> Match3Engine::findAllMatchesWithPatterns() {
 }
 
 void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, itemTypes.size() - 1);
-
     for (int col = 0; col < width; col++) {
         for (int destRow = height - 1; destRow >= 0; --destRow) {
             if (grid[destRow][col].type != EMPTY_CELL) {
@@ -287,7 +283,7 @@ void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
                 int newItem;
                 int attempts = 0;
                 do {
-                    newItem = itemTypes[dis(gen)];
+                    newItem = spawnNewItem();
                     attempts++;
 
                     if (attempts >= MAX_ATTEMPTS) {
@@ -998,6 +994,14 @@ bool Match3Engine::isSpecialType(int itemId) const {
 
 void Match3Engine::setSpecialTypeMap(unordered_map<int, int> map) {
     this->specialTypeMap = map;
+    for (int id: itemTypes) {
+        if (specialTypeMap[id] == SpecialType::NONE) {
+            normalPool.push_back(id);
+        }
+        else {
+            specialPool.push_back(id);
+        }
+    }
 }
 
 SpecialType Match3Engine::getSpecialTypeFromIndex(int index) {
@@ -1013,4 +1017,15 @@ SpecialType Match3Engine::getSpecialTypeFromIndex(int index) {
 
 void Match3Engine::setSpecialIndexMap(unordered_map<pair<int, int>, int, pair_hash> map) {
     this->specialIndexMap = map;
+}
+
+int Match3Engine::spawnNewItem() {
+    int chance = rand() % 100;
+
+    if (chance < 99.5) {
+        return normalPool[rand() % normalPool.size()];
+    }
+    else {
+        return specialPool[rand() % specialPool.size()];
+    }
 }

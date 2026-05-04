@@ -101,6 +101,8 @@ private:
     optional<MatchResult> comboResult;
     unordered_map<int, int> specialTypeMap;
     unordered_map<pair<int, int>, int, pair_hash> specialIndexMap;
+    vector<int> normalPool;
+    vector<int> specialPool;
 
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
@@ -121,6 +123,7 @@ private:
     MatchPattern findComboPattern(int row1, int col1, int row2, int col2);
     bool isSpecialType(int itemId) const;
     SpecialType getSpecialTypeFromIndex(int index);
+    int spawnNewItem();
 
 public:
     Match3Engine(int width, int height, vector<int> itemTypes);
