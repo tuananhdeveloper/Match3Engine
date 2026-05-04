@@ -13,12 +13,12 @@ struct Move {
     int row1, col1, row2, col2;
 };
 
-struct SpecialType {
-    int NONE = -1;
-    int STRIPED_VERTICAL = 0;
-    int STRIPED_HORIZONTAL = 1;
-    int COLOR_BOMB = 2;
-    int WRAPPED = 3;
+enum SpecialType {
+    NONE = -1,
+    STRIPED_VERTICAL = 0,
+    STRIPED_HORIZONTAL = 1,
+    COLOR_BOMB = 2,
+    WRAPPED = 3
 };
 
 enum class MatchPattern {
@@ -28,7 +28,14 @@ enum class MatchPattern {
     MATCH_4_VERTICAL,
     MATCH_5,
     MATCH_L,
-    MATCH_T
+    MATCH_T,
+    STRIPED_STRIPED,
+    STRIPED_WRAPPED,
+    WRAPPED_WRAPPED,
+    COLOR_BOMB_NORMAL_TYPE,
+    COLOR_BOMB_STRIPED,
+    COLOR_BOMB_WRAPPED,
+    COLOR_BOMB_COLOR_BOMB
 };
 
 struct Cell {
@@ -73,19 +80,27 @@ struct EventWriter {
     }
 };
 
+struct pair_hash {
+    inline size_t operator()(const std::pair<int, int> & v) const {
+        return v.first * 2026 + v.second;
+    }
+};
+
 class Match3Engine {
 private:
     int width;
     int height;
     vector<int> itemTypes;
-    int score = 0;
     vector<vector<Cell>> grid;
     vector<vector<Cell>> originalGrid;
     const int EMPTY_CELL = -1;
     const int MAX_ATTEMPTS = 100;
-    const int BASE_POINTS_PER_CELL = 10;
-    SpecialType mSpecialType;
     int holeItemId = -1;
+    int selectedRow = -1;
+    int selectedCol = -1;
+    optional<MatchResult> comboResult;
+    unordered_map<int, int> specialTypeMap;
+    unordered_map<pair<int, int>, int, pair_hash> specialIndexMap;
 
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
@@ -101,16 +116,17 @@ private:
     bool wouldCreateMatchAfterSwap(int row1, int col1, int row2, int col2);
     bool checkMatchAt(int row, int col);
     void applyGravityAndRefillStream(EventWriter* writer);
+    optional<MatchResult> getCombo(int row2, int col2);
+    MatchResult getComboMatchResult(int row1, int col1, int row2, int col2);
+    MatchPattern findComboPattern(int row1, int col1, int row2, int col2);
+    bool isSpecialType(int itemId) const;
+    SpecialType getSpecialTypeFromIndex(int index);
 
 public:
     Match3Engine(int width, int height, vector<int> itemTypes);
     set<pair<int, int>> findAllMatches();
     void setGrid(vector<vector<Cell>> grid);
-    void updateSpecialType(int stripedVertical, int stripedHorizontal, int colorBomb, int wrapped);
     void setHoleItemId(int holeItemId);
-    SpecialType getSpecialType() {
-        return mSpecialType;
-    };
     int getItem(int col, int row);
     void applyGravity(EventWriter* writer = nullptr);
     int processCascade();
@@ -128,7 +144,8 @@ public:
     vector<MatchResult> findAllMatchesWithPatterns();
     int processCascadeWithSpecials(bool streaming = false, bool isRefillingSmart = false, EventWriter* writer = nullptr);
     bool swap(int row1, int col1, int row2, int col2);
-    int getScore();
     void reset();
+    void setSpecialTypeMap(unordered_map<int, int> specialTypeMap);
+    void setSpecialIndexMap(unordered_map<pair<int, int>, int, pair_hash> specialIndexMap);
 };
 #endif //MATCH3ENGINE_MATCH3_ENGINE_H

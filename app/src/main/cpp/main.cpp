@@ -153,7 +153,7 @@ void testFourMatchHorizontal() {
         engine.spawnSpecialCell(match);
         auto type = engine.getSpecialType(match.epicenter.first,
                                                  match.epicenter.second);
-        assert(type == engine.getSpecialType().STRIPED_HORIZONTAL);
+        assert(type == SpecialType::STRIPED_HORIZONTAL);
         LOGD("✓ Striped Horizontal candy spawned!\n");
     }
     else {
@@ -176,7 +176,7 @@ void testLMatch() {
         LOGD("Cells: %zu\n", match.cells.size());
         engine.spawnSpecialCell(match);
         auto type = engine.getSpecialType(0, 2);
-        assert(type == engine.getSpecialType().WRAPPED);
+        assert(type == SpecialType::WRAPPED);
         LOGD("✓ Wrapped candy spawned!\n");
     }
 }
@@ -195,7 +195,7 @@ void testTMatch() {
         LOGD("✓ T-MATCH detected!\n");
         engine.spawnSpecialCell(match);
         auto type = engine.getSpecialType(2, 2);
-        assert(type == engine.getSpecialType().WRAPPED);
+        assert(type == SpecialType::WRAPPED);
         LOGD("✓ Wrapped candy spawned!\n");
     }
 }
@@ -215,7 +215,7 @@ void test5Match() {
         LOGD("Cells: %zu\n", match.cells.size());
         engine.spawnSpecialCell(match);
         auto type = engine.getSpecialType(1, 2);
-        assert(type == engine.getSpecialType().COLOR_BOMB);
+        assert(type == SpecialType::COLOR_BOMB);
         LOGD("✓ Color Bomb spawned!\n");
     }
 }
@@ -236,7 +236,7 @@ void testCascadeWithSpecials() {
     int type = -1;
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 6; col++) {
-            if (engine.getSpecialType(row, col) != engine.getSpecialType().NONE) {
+            if (engine.getSpecialType(row, col) != SpecialType::NONE) {
                 foundSpecial = true;
                 type = engine.getSpecialType(row, col);
             }

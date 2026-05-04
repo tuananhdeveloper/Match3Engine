@@ -24,7 +24,7 @@ Match3Engine::Match3Engine(int width, int height, vector<int> itemTypes):
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
             grid[row][col].type = itemTypes[dis(gen)];
-            grid[row][col].specialType = mSpecialType.NONE;
+            grid[row][col].specialType = SpecialType::NONE;
         }
     }
 }
@@ -38,7 +38,7 @@ int Match3Engine::getItem(int col, int row) {
 
 int Match3Engine::getSpecialType(int row, int col) {
     if (!isInBounds(row, col)) {
-        return mSpecialType.NONE;
+        return SpecialType::NONE;
     }
     return grid[row][col].specialType;
 }
@@ -48,7 +48,8 @@ int Match3Engine::countConsecutive(int row, int col, int dRow, int dCol, int ite
     int nRow = row + dRow;
     int nCol = col + dCol;
 
-    while (isInBounds(nRow, nCol) && grid[nRow][nCol].type == itemType) {
+    while (isInBounds(nRow, nCol) && grid[nRow][nCol].type == itemType
+        && !isSpecialType(grid[nRow][nCol].specialType)) {
         count++;
         nRow += dRow;
         nCol += dCol;
@@ -106,6 +107,23 @@ MatchResult Match3Engine::detectPatternAt(int row, int col) {
             break;
         default:
             break;
+    }
+
+    bool isFromUser = false;
+    for (pair<int, int> item: result.cells) {
+        if (selectedRow == item.first && selectedCol == item.second) {
+            isFromUser = true;
+            break;
+        }
+    }
+
+    if (isFromUser) {
+        result.epicenter = {selectedRow, selectedCol};
+        selectedRow = -1;
+        selectedCol = -1;
+    }
+    else {
+        result.epicenter = {row, col};
     }
 
     return result;
@@ -187,25 +205,31 @@ void Match3Engine::spawnSpecialCell(const MatchResult &match) {
     if (!isInBounds(erow, ecol)) {
         return;
     }
-    int type = mSpecialType.NONE;
+    int type = SpecialType::NONE;
     switch (match.pattern) {
         case MatchPattern::MATCH_4_HORIZONTAL:
-            type = mSpecialType.STRIPED_HORIZONTAL;
+            type = SpecialType::STRIPED_HORIZONTAL;
             break;
         case MatchPattern::MATCH_4_VERTICAL:
-            type = mSpecialType.STRIPED_VERTICAL;
+            type = SpecialType::STRIPED_VERTICAL;
             break;
         case MatchPattern::MATCH_5:
-            type = mSpecialType.COLOR_BOMB;
+            type = SpecialType::COLOR_BOMB;
             break;
         case MatchPattern::MATCH_L:
         case MatchPattern::MATCH_T:
-            type = mSpecialType.WRAPPED;
+            type = SpecialType::WRAPPED;
             break;
         default:
             break;
     }
-    grid[erow][ecol].type = match.itemType;
+    if (type != SpecialType::NONE) {
+        LOGD("TYPE: %d", specialIndexMap[{match.itemType, type}]);
+        grid[erow][ecol].type = specialIndexMap[{match.itemType, type}];
+    }
+    else {
+        grid[erow][ecol].type = match.itemType;
+    }
     grid[erow][ecol].specialType = type;
 }
 
@@ -227,6 +251,10 @@ vector<MatchResult> Match3Engine::findAllMatchesWithPatterns() {
                 }
             }
         }
+    }
+
+    if (comboResult.has_value()) {
+        allMatches.push_back(comboResult.value());
     }
 
     return allMatches;
@@ -268,6 +296,7 @@ void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
                 }
                 while (wouldCreateMatch(destRow, col, newItem));
                 grid[destRow][col].type = newItem;
+                grid[destRow][col].specialType = getSpecialTypeFromIndex(newItem);
                 if (writer) {
                     writer->push8(static_cast<int>(EventType::SPAWN), -1, col, destRow, col,
                                   grid[destRow][col].type, static_cast<int>(grid[destRow][col].specialType), 0);
@@ -287,7 +316,6 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
             break;
         }
         cascadeCount++;
-        score += matches.size() * BASE_POINTS_PER_CELL * cascadeCount;
 
         for (const auto& match: matches) {
             switch (match.pattern) {
@@ -310,20 +338,30 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
                     LOGD("MATCH - L");
                     break;
                 default:
+                    LOGD("COMBO");
                     break;
             }
 
-            for (const auto& cell: match.cells) {
-                if (cell.first != match.epicenter.first || cell.second != match.epicenter.second) {
+            if (comboResult.has_value() && match.pattern == comboResult->pattern) {
+                for (const auto& cell: comboResult->cells) {
                     grid[cell.first][cell.second].type = EMPTY_CELL;
-                    grid[cell.first][cell.second].specialType = mSpecialType.NONE;
+                    grid[cell.first][cell.second].specialType = SpecialType::NONE;
                 }
+                comboResult = nullopt;
             }
+            else {
+                for (const auto& cell: match.cells) {
+                    if (cell.first != match.epicenter.first || cell.second != match.epicenter.second) {
+                        grid[cell.first][cell.second].type = EMPTY_CELL;
+                        grid[cell.first][cell.second].specialType = SpecialType::NONE;
+                    }
+                }
 
-            spawnSpecialCell(match);
+                spawnSpecialCell(match);
 
-            if (match.pattern == MatchPattern::MATCH_3) {
-                grid[match.epicenter.first][match.epicenter.second].type = EMPTY_CELL;
+                if (match.pattern == MatchPattern::MATCH_3) {
+                    grid[match.epicenter.first][match.epicenter.second].type = EMPTY_CELL;
+                }
             }
         }
 
@@ -365,6 +403,9 @@ set<pair<int, int>> Match3Engine::findHorizontalMatches(int row) {
     int matchLength = 1;
 
     for (int col = 1; col < width; ++col) {
+        if (isSpecialType(grid[row][col].specialType)) {
+            continue;
+        }
         if (grid[row][col].type == currentType && currentType != EMPTY_CELL) {
             matchLength++;
         }
@@ -402,6 +443,9 @@ set<pair<int, int>> Match3Engine::findVerticalMatches(int col) {
     int matchLength = 1;
 
     for (int row = 1; row < width; ++row) {
+        if (isSpecialType(grid[row][col].specialType)) {
+            continue;
+        }
         if (grid[row][col].type == currentType && currentType != EMPTY_CELL) {
             matchLength++;
         }
@@ -489,6 +533,7 @@ void Match3Engine::refillSmart(EventWriter* writer) {
                 }
                 while (newItem == holeItemId || wouldCreateMatch(row, col, newItem));
                 grid[row][col].type = newItem;
+                grid[row][col].specialType = getSpecialTypeFromIndex(newItem);
                 if (writer) {
                     writer->push8(static_cast<int>(EventType::SPAWN), row, col, row, col,
                                  grid[row][col].type, static_cast<int>(grid[row][col].specialType), 0);
@@ -514,12 +559,14 @@ bool Match3Engine::hasHorizontalMatchAt(int row, int col) {
     int itemType = grid[row][col].type;
 
     int leftCount = 0;
-    for (int i = col - 1; i >= 0 && grid[row][i].type == itemType; i--) {
+    for (int i = col - 1; i >= 0 && grid[row][i].type == itemType
+        && !isSpecialType(grid[row][i].specialType); i--) {
         leftCount++;
     }
 
     int rightCount = 0;
-    for (int i = col + 1; i < width && grid[row][i].type == itemType; i++) {
+    for (int i = col + 1; i < width && grid[row][i].type == itemType
+        && !isSpecialType(grid[row][i].specialType); i++) {
         rightCount++;
     }
 
@@ -532,12 +579,14 @@ bool Match3Engine::hasVerticalMatchAt(int row, int col) {
     int itemType = grid[row][col].type;
 
     int topCount = 0;
-    for (int i = row - 1; i >= 0 && grid[i][col].type == itemType; i--) {
+    for (int i = row - 1; i >= 0 && grid[i][col].type == itemType
+        && !isSpecialType(grid[i][col].specialType); i--) {
         topCount++;
     }
 
     int bottomCount = 0;
-    for (int i = row + 1; i < height && grid[i][col].type == itemType; i++) {
+    for (int i = row + 1; i < height && grid[i][col].type == itemType
+        && !isSpecialType(grid[i][col].specialType); i++) {
         bottomCount++;
     }
 
@@ -590,7 +639,6 @@ int Match3Engine::processCascade() {
             break;
         }
         cascadeCount++;
-        score += matches.size() * BASE_POINTS_PER_CELL * cascadeCount;
         removeMatches(matches);
         applyGravity();
         refillFromTop();
@@ -612,13 +660,25 @@ bool Match3Engine::swap(int row1, int col1, int row2, int col2) {
     if (!isAdjacent(row1, col1, row2, col2)) {
         return false;
     }
-
     std::swap(grid[row1][col1], grid[row2][col2]);
+
+    comboResult = getCombo(row1, col1);
+    if (comboResult.has_value() && comboResult->pattern != MatchPattern::NONE) {
+        return true;
+    }
+
+    comboResult = getCombo(row2, col2);
+    if (comboResult.has_value() && comboResult->pattern != MatchPattern::NONE) {
+        return true;
+    }
+
     auto matches = findAllMatches();
     if (matches.empty()) {
         std::swap(grid[row1][col1], grid[row2][col2]);
         return false;
     }
+    selectedRow = row2;
+    selectedCol = col2;
     return true;
 }
 
@@ -712,6 +772,10 @@ int Match3Engine::countValidMoves() {
 }
 
 bool Match3Engine::wouldCreateMatchAfterSwap(int row1, int col1, int row2, int col2) {
+    if (isSpecialType(grid[row1][col1].specialType)
+        || isSpecialType(grid[row2][col2].specialType)) {
+        return false;
+    }
     ::swap(grid[row1][col1], grid[row2][col2]);
     bool hasMatch = checkMatchAt(row1, col1) || checkMatchAt(row2, col2);
     ::swap(grid[row1][col1], grid[row2][col2]);
@@ -744,23 +808,209 @@ optional<Move> Match3Engine::findHint() {
     return nullopt;
 }
 
-int Match3Engine::getScore() {
-    return score;
-}
-
 void Match3Engine::reset() {
     this->grid = originalGrid;
-    score = 0;
-}
-
-void Match3Engine::updateSpecialType(int stripedVertical, int stripedHorizontal, int colorBomb,
-                                     int wrapped) {
-    mSpecialType.STRIPED_VERTICAL = stripedVertical;
-    mSpecialType.STRIPED_HORIZONTAL = stripedHorizontal;
-    mSpecialType.COLOR_BOMB = colorBomb;
-    mSpecialType.WRAPPED = wrapped;
 }
 
 void Match3Engine::setHoleItemId(int id) {
     this->holeItemId = id;
+}
+
+const char* getComboPatternName(MatchPattern pattern) {
+    switch (pattern) {
+        case MatchPattern::STRIPED_STRIPED:   return "STRIPED_STRIPED";
+        case MatchPattern::STRIPED_WRAPPED: return "STRIPED_WRAPPED";
+        case MatchPattern::WRAPPED_WRAPPED:  return "WRAPPED_WRAPPED";
+        case MatchPattern::COLOR_BOMB_WRAPPED:  return "COLOR_BOMB_WRAPPED";
+        case MatchPattern::COLOR_BOMB_STRIPED:  return "COLOR_BOMB_STRIPED";
+        case MatchPattern::COLOR_BOMB_COLOR_BOMB:  return "COLOR_BOMB_COLOR_BOMB";
+        default: return "Unknown";
+    }
+}
+
+optional<MatchResult> Match3Engine::getCombo(int row2, int col2) {
+    int* dRows = new int[]{-1, 0, 1};
+    int* dCols = new int[]{-1, 0, 1};
+    for (int dRow = 0; dRow < 3; dRow++) {
+        for (int dCol = 0; dCol < 3; dCol++) {
+            if (dRows[dRow] == 0 && dCols[dCol] == 0) {
+                continue;
+            }
+            int row1 = dRows[dRow] + row2;
+            int col1 = dCols[dCol] + col2;
+            if (row1 >= 0 && row1 < height && col1 >= 0 && col1 < width
+                && (row1 == row2 || col1 == col2)
+                && findComboPattern(row1, col1, row2, col2) != MatchPattern::NONE) {
+                LOGD("COMBO: %s", getComboPatternName(findComboPattern(row1, col1, row2, col2)));
+                return getComboMatchResult(row1, col1, row2, col2);
+            }
+        }
+    }
+    LOGD("NO COMBO");
+    return nullopt;
+}
+
+MatchResult Match3Engine::getComboMatchResult(int row1, int col1, int row2, int col2) {
+    Cell firstItem = grid[row1][col1];
+    Cell secondItem = grid[row2][col2];
+    MatchResult result;
+    result.epicenter = {row1, col1};
+
+    result.pattern = findComboPattern(row1, col1, row2, col2);
+    switch (result.pattern) {
+        case MatchPattern::STRIPED_STRIPED:
+            for (int row = 0; row < height; row++) {
+                result.cells.insert({row, col2});
+            }
+            for (int col = 0; col < width; col++) {
+                result.cells.insert({row2, col});
+            }
+            break;
+        case MatchPattern::STRIPED_WRAPPED:
+            if (row1 == row2) { // swap horizontally
+                for (int col = 0; col < width; col++) {
+                    result.cells.insert({row2, col});
+                }
+            }
+            else if (col1 == col2) { // swap vertically
+                for (int row = 0; row < height; row++) {
+                    result.cells.insert({row, col2});
+                }
+            }
+            break;
+        case MatchPattern::WRAPPED_WRAPPED:
+            for (int row = 0; row < height; row++) {
+                for (int col = 0; col < width; col++) {
+                    if (abs(row - row2) <= 2 && abs(col - col2) <= 2) {
+                        result.cells.insert({row, col});
+                    }
+                }
+            }
+            break;
+        case MatchPattern::COLOR_BOMB_NORMAL_TYPE:
+            {
+                int type = (firstItem.specialType == SpecialType::NONE) ? firstItem.type : secondItem.type;
+                for (int row = 0; row < height; row++) {
+                    for (int col = 0; col < width; col++) {
+                        if (grid[row][col].type == type || grid[row][col].specialType == SpecialType::COLOR_BOMB) {
+                            result.cells.insert({row, col});
+                        }
+                    }
+                }
+            }
+            break;
+        case MatchPattern::COLOR_BOMB_STRIPED:
+            {
+                int type = (firstItem.specialType == SpecialType::STRIPED_VERTICAL
+                            || firstItem.specialType == SpecialType::STRIPED_HORIZONTAL) ? firstItem.type : secondItem.type;
+                int specialType = (firstItem.specialType == SpecialType::STRIPED_VERTICAL
+                            || firstItem.specialType == SpecialType::STRIPED_HORIZONTAL) ? firstItem.specialType : secondItem.specialType;
+                for (int row = 0; row < height; row++) {
+                    for (int col = 0; col < width; col++) {
+                        if (grid[row][col].type == type) {
+                            grid[row][col].specialType = specialType;
+                            result.cells.insert({row, col});
+                        }
+                    }
+                }
+            }
+            break;
+        case MatchPattern::COLOR_BOMB_WRAPPED:
+            {
+                int type = (firstItem.specialType == SpecialType::WRAPPED) ? firstItem.type : secondItem.type;
+                vector<pair<int, int>> wrappedPositions;
+                for (int row = 0; row < height; row++) {
+                    for (int col = 0; col < width; col++) {
+                        if (grid[row][col].type == type) {
+                            grid[row][col].specialType = SpecialType::WRAPPED;
+                        }
+                        if(grid[row][col].specialType == SpecialType::WRAPPED) {
+                            wrappedPositions.push_back({row, col});
+                        }
+                    }
+                }
+                for (pair<int, int> position: wrappedPositions) {
+                    for (int row = 0; row < height; row++) {
+                        for (int col = 0; col < width; col++) {
+                            if (abs(row - position.first) <= 1 && abs(col - position.second) <= 1) {
+                                result.cells.insert({row, col});
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        case MatchPattern::COLOR_BOMB_COLOR_BOMB:
+            for (int row = 0; row < height; row++) {
+                for (int col = 0; col < width; col++) {
+                    result.cells.insert({row, col});
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
+MatchPattern Match3Engine::findComboPattern(int row1, int col1, int row2, int col2) {
+    Cell firstItem = grid[row1][col1];
+    Cell secondItem = grid[row2][col2];
+
+    if ((firstItem.specialType == SpecialType::STRIPED_VERTICAL && secondItem.specialType == SpecialType::STRIPED_VERTICAL)
+        || (firstItem.specialType == SpecialType::STRIPED_HORIZONTAL && secondItem.specialType == SpecialType::STRIPED_HORIZONTAL)
+        || (firstItem.specialType == SpecialType::STRIPED_VERTICAL && secondItem.specialType == SpecialType::STRIPED_HORIZONTAL)
+        || (firstItem.specialType == SpecialType::STRIPED_HORIZONTAL && secondItem.specialType == SpecialType::STRIPED_VERTICAL)) {
+        return MatchPattern::STRIPED_STRIPED;
+    }
+    if ((firstItem.specialType == SpecialType::STRIPED_VERTICAL && secondItem.specialType == SpecialType::WRAPPED)
+        || (firstItem.specialType == SpecialType::STRIPED_HORIZONTAL && secondItem.specialType == SpecialType::WRAPPED)
+        || (firstItem.specialType == SpecialType::WRAPPED && secondItem.specialType == SpecialType::STRIPED_HORIZONTAL)
+        || (firstItem.specialType == SpecialType::WRAPPED && secondItem.specialType == SpecialType::STRIPED_VERTICAL)) {
+        return MatchPattern::STRIPED_WRAPPED;
+    }
+    if (firstItem.specialType == SpecialType::WRAPPED && secondItem.specialType == SpecialType::WRAPPED) {
+        return MatchPattern::WRAPPED_WRAPPED;
+    }
+    if ((firstItem.specialType == SpecialType::COLOR_BOMB && secondItem.specialType == SpecialType::NONE)
+        || (firstItem.specialType == SpecialType::NONE && secondItem.specialType == SpecialType::COLOR_BOMB)) {
+        return MatchPattern::COLOR_BOMB_NORMAL_TYPE;
+    }
+    if ((firstItem.specialType == SpecialType::COLOR_BOMB && secondItem.specialType == SpecialType::STRIPED_VERTICAL)
+        || (firstItem.specialType == SpecialType::COLOR_BOMB && secondItem.specialType == SpecialType::STRIPED_HORIZONTAL)
+        || (firstItem.specialType == SpecialType::STRIPED_VERTICAL && secondItem.specialType == SpecialType::COLOR_BOMB)
+        || (firstItem.specialType == SpecialType::STRIPED_HORIZONTAL && secondItem.specialType == SpecialType::COLOR_BOMB)) {
+        return MatchPattern::COLOR_BOMB_STRIPED;
+    }
+    if ((firstItem.specialType == SpecialType::COLOR_BOMB && secondItem.specialType == SpecialType::WRAPPED)
+        || (firstItem.specialType == SpecialType::WRAPPED && secondItem.specialType == SpecialType::COLOR_BOMB)) {
+        return MatchPattern::COLOR_BOMB_WRAPPED;
+    }
+    if (firstItem.specialType == SpecialType::COLOR_BOMB && secondItem.specialType == SpecialType::COLOR_BOMB) {
+        return MatchPattern::COLOR_BOMB_COLOR_BOMB;
+    }
+    return MatchPattern::NONE;
+}
+
+bool Match3Engine::isSpecialType(int itemId) const {
+    return itemId != SpecialType::NONE;
+}
+
+void Match3Engine::setSpecialTypeMap(unordered_map<int, int> map) {
+    this->specialTypeMap = map;
+}
+
+SpecialType Match3Engine::getSpecialTypeFromIndex(int index) {
+    int specialValue = specialTypeMap[index];
+    switch (specialValue) {
+        case 0: return STRIPED_VERTICAL;
+        case 1: return STRIPED_HORIZONTAL;
+        case 2: return COLOR_BOMB;
+        case 3: return WRAPPED;
+    }
+    return NONE;
+}
+
+void Match3Engine::setSpecialIndexMap(unordered_map<pair<int, int>, int, pair_hash> map) {
+    this->specialIndexMap = map;
 }

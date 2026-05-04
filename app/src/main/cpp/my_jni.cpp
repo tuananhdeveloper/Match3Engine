@@ -235,13 +235,6 @@ int stepCollectEvents(JNIEnv *env, jobject thiz, jboolean streaming, jintArray o
     return writer->length;
 }
 
-int getScore(JNIEnv *env, jobject thiz) {
-    if (!engine) {
-        return -1;
-    }
-    return engine->getScore();
-}
-
 void reset(JNIEnv *env, jobject thiz) {
     if (!engine) {
         return;
@@ -249,12 +242,53 @@ void reset(JNIEnv *env, jobject thiz) {
     engine->reset();
 }
 
-void updateSpecialType(JNIEnv *env, jobject thiz, int stripedVertical, int stripedHorizontal, int colorBomb,
-                       int wrapped) {
+void setSpecialTypeMap(JNIEnv *env, jobject thiz, jintArray keys, jintArray values, jint size) {
     if (!engine) {
         return;
     }
-    engine->updateSpecialType(stripedVertical, stripedHorizontal, colorBomb, wrapped);
+    jint* c_keys = env->GetIntArrayElements(keys, NULL);
+    jint* c_values = env->GetIntArrayElements(values, NULL);
+    unordered_map<int, int> map;
+    for (int i = 0; i < size; ++i) {
+        map[c_keys[i]] = c_values[i];
+    }
+    engine->setSpecialTypeMap(map);
+    env->ReleaseIntArrayElements(keys, c_keys, 0);
+    env->ReleaseIntArrayElements(values, c_values, 0);
+}
+
+pair<jint, jint> convertPair(JNIEnv *env, jobject javaPairObj) {
+    jclass pairClass = env->GetObjectClass(javaPairObj);
+    jmethodID getFirst = env->GetMethodID(pairClass, "getFirst", "()Ljava/lang/Object;");
+    jmethodID getSecond = env->GetMethodID(pairClass, "getSecond", "()Ljava/lang/Object;");
+
+    jobject firstObj = env->CallObjectMethod(javaPairObj, getFirst);
+    jobject secondObj = env->CallObjectMethod(javaPairObj, getSecond);
+
+    jclass integerClass = env->FindClass("java/lang/Integer");
+    jmethodID intValue = env->GetMethodID(integerClass, "intValue", "()I");
+
+    jint first = env->CallIntMethod(firstObj, intValue);
+    jint second = env->CallIntMethod(secondObj, intValue);
+
+    env->DeleteLocalRef(firstObj);
+    env->DeleteLocalRef(secondObj);
+
+    return std::make_pair(first, second);
+}
+
+void setSpecialIndexMap(JNIEnv *env, jobject thiz, jobjectArray keys, jintArray values, jint size) {
+    if (!engine) {
+        return;
+    }
+    jint* c_values = env->GetIntArrayElements(values, NULL);
+    unordered_map<pair<int, int>, int, pair_hash> map;
+    for (int i = 0; i < size; ++i) {
+        jobject key = env->GetObjectArrayElement(keys, i);
+        map[convertPair(env, key)] = c_values[i];
+    }
+    engine->setSpecialIndexMap(map);
+    env->ReleaseIntArrayElements(values, c_values, 0);
 }
 
 void setHoleItemId(JNIEnv *env, jobject thiz, int itemId) {
@@ -287,10 +321,10 @@ static JNINativeMethod method_table[] = {
         {"nativeSwap", "(IIII)Z", (void*)swapCells},
         {"nativeSwapCollectEvents", "(IIII[I)I", (void*)swapCollectEvents},
         {"nativeStepCollectEvents", "(Z[I)I", (void*)stepCollectEvents},
-        {"nativeGetScore", "()I", (void*)getScore},
         {"nativeReset", "()V", (void*)reset},
-        {"nativeUpdateSpecialType", "(IIII)V", (void*)updateSpecialType},
-        {"nativeSetHoleItemId", "(I)V", (void*)setHoleItemId}
+        {"nativeSetHoleItemId", "(I)V", (void*)setHoleItemId},
+        {"nativeSetSpecialTypeMap", "([I[II)V", (void*) setSpecialTypeMap},
+        {"nativeSetSpecialIndexMap", "([Lcom/tuananh/match3/bridge/Pair;[II)V", (void*) setSpecialIndexMap}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
