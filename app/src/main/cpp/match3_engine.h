@@ -103,6 +103,9 @@ private:
     unordered_map<pair<int, int>, int, pair_hash> specialIndexMap;
     vector<int> normalPool;
     vector<int> specialPool;
+    int normalItemBasePoint = 10;
+    int specialItemBasePoint = 20;
+    int totalScore = 0;
 
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
@@ -124,6 +127,7 @@ private:
     bool isSpecialType(int itemId) const;
     SpecialType getSpecialTypeFromIndex(int index);
     int spawnNewItem();
+    void updateScore(int matchCount, bool isSpecial, int comboMultiplier);
 
 public:
     Match3Engine(int width, int height, vector<int> itemTypes);
@@ -150,5 +154,7 @@ public:
     void reset();
     void setSpecialTypeMap(unordered_map<int, int> specialTypeMap);
     void setSpecialIndexMap(unordered_map<pair<int, int>, int, pair_hash> specialIndexMap);
+    void updateBasePoint(int normalItemBasePoint, int specialItemBasePoint);
+    int getTotalScore();
 };
 #endif //MATCH3ENGINE_MATCH3_ENGINE_H

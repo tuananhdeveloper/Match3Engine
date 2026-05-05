@@ -298,6 +298,20 @@ void setHoleItemId(JNIEnv *env, jobject thiz, int itemId) {
     engine->setHoleItemId(itemId);
 }
 
+void updateBasePoint(JNIEnv *env, jobject thiz, int normalBasePoint, int specialBasePoint) {
+    if (!engine) {
+        return;
+    }
+    engine->updateBasePoint(normalBasePoint, specialBasePoint);
+}
+
+int getTotalScore(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return -1;
+    }
+    return engine->getTotalScore();
+}
+
 static JNINativeMethod method_table[] = {
         {"nativeInit", "(II[I)V", (void*)init},
         {"nativeSetGrid", "([III)V", (void*)setGrid},
@@ -316,15 +330,17 @@ static JNINativeMethod method_table[] = {
         {"nativeCountConsecutive", "(IIIII)I", (void*) countConsecutive},
         {"nativeIsLPattern", "(IIIIII)Z", (void*)isLPattern},
         {"nativeIsTPattern", "(IIIIII)Z", (void*)isTPattern},
-        {"nativeFindAllMatchesWithPatterns", "()[Lcom/tuananh/match3/bridge/MatchResult;", (void*) findAllMatchesWithPatterns},
-        {"nativeProcessCascadeWithSpecials", "()I", (void*) processCascadeWithSpecials},
+        {"nativeFindAllMatchesWithPatterns", "()[Lcom/tuananh/match3/bridge/MatchResult;", (void*)findAllMatchesWithPatterns},
+        {"nativeProcessCascadeWithSpecials", "()I", (void*)processCascadeWithSpecials},
         {"nativeSwap", "(IIII)Z", (void*)swapCells},
         {"nativeSwapCollectEvents", "(IIII[I)I", (void*)swapCollectEvents},
         {"nativeStepCollectEvents", "(Z[I)I", (void*)stepCollectEvents},
         {"nativeReset", "()V", (void*)reset},
         {"nativeSetHoleItemId", "(I)V", (void*)setHoleItemId},
-        {"nativeSetSpecialTypeMap", "([I[II)V", (void*) setSpecialTypeMap},
-        {"nativeSetSpecialIndexMap", "([Lcom/tuananh/match3/bridge/Pair;[II)V", (void*) setSpecialIndexMap}
+        {"nativeSetSpecialTypeMap", "([I[II)V", (void*)setSpecialTypeMap},
+        {"nativeSetSpecialIndexMap", "([Lcom/tuananh/match3/bridge/Pair;[II)V", (void*)setSpecialIndexMap},
+        {"nativeUpdateBasePoint", "(II)V", (void*)updateBasePoint},
+        {"nativeGetTotalScore", "()I", (void*)getTotalScore}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {

@@ -312,6 +312,12 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
             break;
         }
         cascadeCount++;
+        for (const auto& result: matches) {
+            LOGD("CASCADE COUNT: %d", cascadeCount);
+            LOGD("TOTAL CELLS: %d", result.cells.size());
+            updateScore(result.cells.size(), false,
+                        cascadeCount);
+        }
 
         for (const auto& match: matches) {
             switch (match.pattern) {
@@ -806,6 +812,7 @@ optional<Move> Match3Engine::findHint() {
 
 void Match3Engine::reset() {
     this->grid = originalGrid;
+    this->totalScore = 0;
 }
 
 void Match3Engine::setHoleItemId(int id) {
@@ -901,12 +908,32 @@ MatchResult Match3Engine::getComboMatchResult(int row1, int col1, int row2, int 
                             || firstItem.specialType == SpecialType::STRIPED_HORIZONTAL) ? firstItem.type : secondItem.type;
                 int specialType = (firstItem.specialType == SpecialType::STRIPED_VERTICAL
                             || firstItem.specialType == SpecialType::STRIPED_HORIZONTAL) ? firstItem.specialType : secondItem.specialType;
+                vector<pair<int, int>> filterPositions;
+                int transformTotal = 0;
+
                 for (int row = 0; row < height; row++) {
                     for (int col = 0; col < width; col++) {
-                        if (grid[row][col].type == type) {
+                        int index = grid[row][col].type;
+                        if (specialIndexMap[{index, SpecialType::STRIPED_VERTICAL}] == type
+                            || specialIndexMap[{index, SpecialType::STRIPED_HORIZONTAL}] == type
+                            && grid[row][col].specialType == SpecialType::NONE) {
                             grid[row][col].specialType = specialType;
-                            result.cells.insert({row, col});
+                            transformTotal++;
                         }
+                        if (grid[row][col].specialType == specialType) {
+                            filterPositions.push_back({row, col});
+                        }
+                    }
+                }
+                updateScore(transformTotal, true, 1);
+                for (pair<int, int> position: filterPositions) {
+                    int filterRow = position.first;
+                    int filterCol = position.second;
+                    for (int row = 0; row < height; row++) {
+                        result.cells.insert({row, filterCol});
+                    }
+                    for (int col = 0; col < width; col++) {
+                        result.cells.insert({filterRow, col});
                     }
                 }
             }
@@ -915,16 +942,22 @@ MatchResult Match3Engine::getComboMatchResult(int row1, int col1, int row2, int 
             {
                 int type = (firstItem.specialType == SpecialType::WRAPPED) ? firstItem.type : secondItem.type;
                 vector<pair<int, int>> wrappedPositions;
+                int transformTotal = 0;
+
                 for (int row = 0; row < height; row++) {
                     for (int col = 0; col < width; col++) {
-                        if (grid[row][col].type == type) {
+                        int index = grid[row][col].type;
+                        if (specialIndexMap[{index, SpecialType::WRAPPED}] == type
+                            && grid[row][col].specialType == SpecialType::NONE) {
                             grid[row][col].specialType = SpecialType::WRAPPED;
+                            transformTotal++;
                         }
                         if(grid[row][col].specialType == SpecialType::WRAPPED) {
                             wrappedPositions.push_back({row, col});
                         }
                     }
                 }
+                updateScore(transformTotal, true, 1);
                 for (pair<int, int> position: wrappedPositions) {
                     for (int row = 0; row < height; row++) {
                         for (int col = 0; col < width; col++) {
@@ -988,8 +1021,8 @@ MatchPattern Match3Engine::findComboPattern(int row1, int col1, int row2, int co
     return MatchPattern::NONE;
 }
 
-bool Match3Engine::isSpecialType(int itemId) const {
-    return itemId != SpecialType::NONE;
+bool Match3Engine::isSpecialType(int specialType) const {
+    return specialType != SpecialType::NONE;
 }
 
 void Match3Engine::setSpecialTypeMap(unordered_map<int, int> map) {
@@ -1028,4 +1061,18 @@ int Match3Engine::spawnNewItem() {
     else {
         return specialPool[rand() % specialPool.size()];
     }
+}
+
+void Match3Engine::updateBasePoint(int normalBasePoint, int specialBasePoint) {
+    this->normalItemBasePoint = normalBasePoint;
+    this->specialItemBasePoint = specialBasePoint;
+}
+
+int Match3Engine::getTotalScore() {
+    return this->totalScore;
+}
+
+void Match3Engine::updateScore(int matchCount, bool isSpecial, int comboMultiplier) {
+    int baseScore = isSpecial ? specialItemBasePoint : normalItemBasePoint;
+    totalScore += matchCount * baseScore * comboMultiplier;
 }
