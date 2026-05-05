@@ -106,6 +106,7 @@ private:
     int normalItemBasePoint = 10;
     int specialItemBasePoint = 20;
     int totalScore = 0;
+    vector<Cell> removedCells;
 
 private:
     set<pair<int, int>> findHorizontalMatches(int row);
@@ -156,5 +157,6 @@ public:
     void setSpecialIndexMap(unordered_map<pair<int, int>, int, pair_hash> specialIndexMap);
     void updateBasePoint(int normalItemBasePoint, int specialItemBasePoint);
     int getTotalScore();
+    vector<Cell> getRemovedCells();
 };
 #endif //MATCH3ENGINE_MATCH3_ENGINE_H

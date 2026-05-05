@@ -330,6 +330,22 @@ void onUpdatePlayerProgress(JNIEnv *env, jobject thiz, jboolean isWin, jint leve
     _onUpdatePlayerProgress(isWin, levelId, score);
 }
 
+jobjectArray getRemovedCells(JNIEnv *env, jobject thiz) {
+    if (!engine) {
+        return nullptr;
+    }
+    vector<Cell> cells = engine->getRemovedCells();
+    jobjectArray array = env->NewObjectArray(cells.size(),
+                                             g_jni_map.find(JniType::CELL)->second.clazz,
+                                             nullptr);
+    for (int i = 0; i < cells.size(); i++) {
+        jobject item = create_jni_object(env, JniType::CELL, cells[i].type);
+        env->SetObjectArrayElement(array, i, item);
+        env->DeleteLocalRef(item);
+    }
+    return array;
+}
+
 static JNINativeMethod method_table[] = {
         {"nativeInit", "(II[I)V", (void*)init},
         {"nativeSetGrid", "([III)V", (void*)setGrid},
@@ -360,7 +376,8 @@ static JNINativeMethod method_table[] = {
         {"nativeUpdateBasePoint", "(II)V", (void*)updateBasePoint},
         {"nativeGetTotalScore", "()I", (void*)getTotalScore},
         {"nativeLoadGame", "(Ljava/lang/String;)Lcom/tuananh/match3/bridge/PlayerProgress;", (void*)loadGame},
-        {"nativeOnUpdatePlayerProgress", "(II)V", (void*) onUpdatePlayerProgress}
+        {"nativeOnUpdatePlayerProgress", "(ZII)V", (void*)onUpdatePlayerProgress},
+        {"nativeGetRemovedCells", "()[Lcom/tuananh/match3/bridge/Cell;", (void*)getRemovedCells}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
@@ -375,6 +392,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     register_jni_type(env, JniType::MATCH_RESULT, "com/tuananh/match3/bridge/MatchResult", "<init>",
                       "(ILjava/util/Set;Lcom/tuananh/match3/bridge/Pair;I)V");
     register_jni_type(env, JniType::PLAYER_PROGRESS, "com/tuananh/match3/bridge/PlayerProgress", "<init>", "(I[IJ)V");
+    register_jni_type(env, JniType::CELL, "com/tuananh/match3/bridge/Cell", "<init>", "(I)V");
     const char* classNames[] = {
             "com/tuananh/match3/lwjgl3/DesktopNativeEngine",
             "com/tuananh/match3/android/AndroidNativeEngine"

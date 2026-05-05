@@ -317,6 +317,9 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
             LOGD("TOTAL CELLS: %d", result.cells.size());
             updateScore(result.cells.size(), false,
                         cascadeCount);
+            for (auto cell: result.cells) {
+                removedCells.push_back(grid[cell.first][cell.second]);
+            }
         }
 
         for (const auto& match: matches) {
@@ -1075,4 +1078,8 @@ int Match3Engine::getTotalScore() {
 void Match3Engine::updateScore(int matchCount, bool isSpecial, int comboMultiplier) {
     int baseScore = isSpecial ? specialItemBasePoint : normalItemBasePoint;
     totalScore += matchCount * baseScore * comboMultiplier;
+}
+
+vector<Cell> Match3Engine::getRemovedCells() {
+    return removedCells;
 }

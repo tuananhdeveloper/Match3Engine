@@ -7,7 +7,8 @@ enum class JniType {
     ADD_SET,
     PAIR,
     INTEGER,
-    PLAYER_PROGRESS
+    PLAYER_PROGRESS,
+    CELL
 };
 
 struct JniAsset {
