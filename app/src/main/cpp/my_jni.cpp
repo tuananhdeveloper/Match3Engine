@@ -3,6 +3,7 @@
 #include <vector>
 #include "match3_engine.h"
 #include "jni_utils.h"
+#include "save_manager.h"
 
 Match3Engine* engine = nullptr;
 
@@ -312,6 +313,23 @@ int getTotalScore(JNIEnv *env, jobject thiz) {
     return engine->getTotalScore();
 }
 
+jobject loadGame(JNIEnv *env, jobject thiz, jstring filePath) {
+    PlayerProgress p = _loadGame(from_jstring(env, filePath));
+
+    jsize len = static_cast<jsize>(p.highScores.size());
+    jintArray jArray = env->NewIntArray(len);
+
+    if (len > 0 && p.highScores.data() != nullptr) {
+        env->SetIntArrayRegion(jArray, 0, len, (const jint*)p.highScores.data());
+    }
+
+    return create_jni_object(env, JniType::PLAYER_PROGRESS, p.reachedLevel, jArray, p.lastUpdated);
+}
+
+void onWinLevel(JNIEnv *env, jobject thiz, jint levelId, jint score) {
+    _onWinLevel(levelId, score);
+}
+
 static JNINativeMethod method_table[] = {
         {"nativeInit", "(II[I)V", (void*)init},
         {"nativeSetGrid", "([III)V", (void*)setGrid},
@@ -340,7 +358,9 @@ static JNINativeMethod method_table[] = {
         {"nativeSetSpecialTypeMap", "([I[II)V", (void*)setSpecialTypeMap},
         {"nativeSetSpecialIndexMap", "([Lcom/tuananh/match3/bridge/Pair;[II)V", (void*)setSpecialIndexMap},
         {"nativeUpdateBasePoint", "(II)V", (void*)updateBasePoint},
-        {"nativeGetTotalScore", "()I", (void*)getTotalScore}
+        {"nativeGetTotalScore", "()I", (void*)getTotalScore},
+        {"nativeLoadGame", "(Ljava/lang/String;)Lcom/tuananh/match3/bridge/PlayerProgress;", (void*)loadGame},
+        {"nativeOnWinLevel", "(II)V", (void*) onWinLevel}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
@@ -354,6 +374,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     register_jni_type(env, JniType::PAIR, "com/tuananh/match3/bridge/Pair", "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
     register_jni_type(env, JniType::MATCH_RESULT, "com/tuananh/match3/bridge/MatchResult", "<init>",
                       "(ILjava/util/Set;Lcom/tuananh/match3/bridge/Pair;I)V");
+    register_jni_type(env, JniType::PLAYER_PROGRESS, "com/tuananh/match3/bridge/PlayerProgress", "<init>", "(I[IJ)V");
     const char* classNames[] = {
             "com/tuananh/match3/lwjgl3/DesktopNativeEngine",
             "com/tuananh/match3/android/AndroidNativeEngine"
