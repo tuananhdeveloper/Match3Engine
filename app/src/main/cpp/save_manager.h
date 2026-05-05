@@ -76,14 +76,14 @@ PlayerProgress _loadGame(const std::string& filePath) {
     return data;
 }
 
-void _onWinLevel(int levelId, int score) {
+void _onUpdatePlayerProgress(bool isWin, int levelId, int score) {
     PlayerProgress data = _loadGame(savePath);
 
     if (score > data.highScores[levelId]) {
         data.highScores[levelId] = score;
     }
 
-    if (levelId == data.reachedLevel) {
+    if (isWin && levelId == data.reachedLevel) {
         data.reachedLevel++;
     }
 

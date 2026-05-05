@@ -326,8 +326,8 @@ jobject loadGame(JNIEnv *env, jobject thiz, jstring filePath) {
     return create_jni_object(env, JniType::PLAYER_PROGRESS, p.reachedLevel, jArray, p.lastUpdated);
 }
 
-void onWinLevel(JNIEnv *env, jobject thiz, jint levelId, jint score) {
-    _onWinLevel(levelId, score);
+void onUpdatePlayerProgress(JNIEnv *env, jobject thiz, jboolean isWin, jint levelId, jint score) {
+    _onUpdatePlayerProgress(isWin, levelId, score);
 }
 
 static JNINativeMethod method_table[] = {
@@ -360,7 +360,7 @@ static JNINativeMethod method_table[] = {
         {"nativeUpdateBasePoint", "(II)V", (void*)updateBasePoint},
         {"nativeGetTotalScore", "()I", (void*)getTotalScore},
         {"nativeLoadGame", "(Ljava/lang/String;)Lcom/tuananh/match3/bridge/PlayerProgress;", (void*)loadGame},
-        {"nativeOnWinLevel", "(II)V", (void*) onWinLevel}
+        {"nativeOnUpdatePlayerProgress", "(II)V", (void*) onUpdatePlayerProgress}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
