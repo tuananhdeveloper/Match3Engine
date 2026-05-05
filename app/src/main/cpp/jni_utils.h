@@ -6,7 +6,8 @@ enum class JniType {
     INIT_SET,
     ADD_SET,
     PAIR,
-    INTEGER
+    INTEGER,
+    PLAYER_PROGRESS
 };
 
 struct JniAsset {
@@ -78,5 +79,13 @@ jobject create_java_set_of_pairs(JNIEnv* env, std::set<pair<int, int>> items) {
         env->CallBooleanMethod(setObj, it2->second.method, pairObj);
     }
     return setObj;
+}
+
+std::string from_jstring(JNIEnv *env, jstring jStr) {
+    if (!jStr) return "";
+    const char *chars = env->GetStringUTFChars(jStr, nullptr);
+    std::string result(chars);
+    env->ReleaseStringUTFChars(jStr, chars);
+    return result;
 }
 
