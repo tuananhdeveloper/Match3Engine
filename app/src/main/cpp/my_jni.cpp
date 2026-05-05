@@ -230,7 +230,7 @@ int stepCollectEvents(JNIEnv *env, jobject thiz, jboolean streaming, jintArray o
 
     EventWriter* writer = new EventWriter(out, (int)capacity);
     bool isStreaming = streaming == JNI_TRUE;
-    engine->processCascadeWithSpecials(isStreaming, writer);
+    engine->processCascadeWithSpecials(isStreaming, false, writer);
     env->ReleaseIntArrayElements(outEvents, out, 0);
     return writer->length;
 }
