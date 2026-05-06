@@ -260,8 +260,9 @@ vector<MatchResult> Match3Engine::findAllMatchesWithPatterns() {
     return allMatches;
 }
 
-void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
+void Match3Engine::applyGravityAndRefillStream(EventWriter* writer, int cascade) {
     for (int col = 0; col < width; col++) {
+        int fallingRow = 0;
         for (int destRow = height - 1; destRow >= 0; --destRow) {
             if (grid[destRow][col].type != EMPTY_CELL) {
                 continue;
@@ -276,7 +277,7 @@ void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
                 grid[srcRow][col] = Cell(EMPTY_CELL);
                 if (writer) {
                     writer->push8(static_cast<int>(EventType::FALL), srcRow, col, destRow, col,
-                                  cell.type, static_cast<int>(cell.specialType), 0);
+                                  cell.type, static_cast<int>(cell.specialType), cascade);
                 }
             }
             else {
@@ -294,8 +295,8 @@ void Match3Engine::applyGravityAndRefillStream(EventWriter* writer) {
                 grid[destRow][col].type = newItem;
                 grid[destRow][col].specialType = getSpecialTypeFromIndex(newItem);
                 if (writer) {
-                    writer->push8(static_cast<int>(EventType::SPAWN), -1, col, destRow, col,
-                                  grid[destRow][col].type, static_cast<int>(grid[destRow][col].specialType), 0);
+                    writer->push8(static_cast<int>(EventType::SPAWN), --fallingRow, col, destRow, col,
+                                  grid[destRow][col].type, static_cast<int>(grid[destRow][col].specialType), cascade);
                 }
             }
         }
@@ -384,7 +385,7 @@ int Match3Engine::processCascadeWithSpecials(bool streaming, bool isRefillingSma
             }
         }
         else {
-            applyGravityAndRefillStream(writer);
+            applyGravityAndRefillStream(writer, cascadeCount);
         }
     }
 

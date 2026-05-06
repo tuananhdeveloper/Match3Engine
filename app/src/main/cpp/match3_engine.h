@@ -66,6 +66,7 @@ struct EventWriter {
 
     EventWriter(int* out_, int cap_) : out(out_), capacity(cap_), length(0) {}
 
+    // flags = 1 - cascade 1, flags = 2 - cascade 2 ...
     bool push8(int type, int row1, int col1, int row2, int col2, int item, int special, int flags) {
         if (length + STRIDE > capacity) {
             return false;
@@ -121,7 +122,7 @@ private:
     bool isAdjacent(int row1, int col1, int row2, int col2);
     bool wouldCreateMatchAfterSwap(int row1, int col1, int row2, int col2);
     bool checkMatchAt(int row, int col);
-    void applyGravityAndRefillStream(EventWriter* writer);
+    void applyGravityAndRefillStream(EventWriter* writer, int cascade);
     optional<MatchResult> getCombo(int row2, int col2);
     MatchResult getComboMatchResult(int row1, int col1, int row2, int col2);
     MatchPattern findComboPattern(int row1, int col1, int row2, int col2);
