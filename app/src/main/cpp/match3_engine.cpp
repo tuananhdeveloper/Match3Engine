@@ -668,12 +668,7 @@ bool Match3Engine::swap(int row1, int col1, int row2, int col2) {
     }
     std::swap(grid[row1][col1], grid[row2][col2]);
 
-    comboResult = getCombo(row1, col1);
-    if (comboResult.has_value() && comboResult->pattern != MatchPattern::NONE) {
-        return true;
-    }
-
-    comboResult = getCombo(row2, col2);
+    comboResult = getCombo(row1, col1, row2, col2);
     if (comboResult.has_value() && comboResult->pattern != MatchPattern::NONE) {
         return true;
     }
@@ -835,23 +830,10 @@ const char* getComboPatternName(MatchPattern pattern) {
     }
 }
 
-optional<MatchResult> Match3Engine::getCombo(int row2, int col2) {
-    int* dRows = new int[]{-1, 0, 1};
-    int* dCols = new int[]{-1, 0, 1};
-    for (int dRow = 0; dRow < 3; dRow++) {
-        for (int dCol = 0; dCol < 3; dCol++) {
-            if (dRows[dRow] == 0 && dCols[dCol] == 0) {
-                continue;
-            }
-            int row1 = dRows[dRow] + row2;
-            int col1 = dCols[dCol] + col2;
-            if (row1 >= 0 && row1 < height && col1 >= 0 && col1 < width
-                && (row1 == row2 || col1 == col2)
-                && findComboPattern(row1, col1, row2, col2) != MatchPattern::NONE) {
-                LOGD("COMBO: %s", getComboPatternName(findComboPattern(row1, col1, row2, col2)));
-                return getComboMatchResult(row1, col1, row2, col2);
-            }
-        }
+optional<MatchResult> Match3Engine::getCombo(int row1, int col1, int row2, int col2) {
+    if (findComboPattern(row1, col1, row2, col2) != MatchPattern::NONE) {
+        LOGD("COMBO: %s", getComboPatternName(findComboPattern(row1, col1, row2, col2)));
+        return getComboMatchResult(row1, col1, row2, col2);
     }
     LOGD("NO COMBO");
     return nullopt;
@@ -921,6 +903,7 @@ MatchResult Match3Engine::getComboMatchResult(int row1, int col1, int row2, int 
                         if (specialIndexMap[{index, SpecialType::STRIPED_VERTICAL}] == type
                             || specialIndexMap[{index, SpecialType::STRIPED_HORIZONTAL}] == type
                             && grid[row][col].specialType == SpecialType::NONE) {
+                            grid[row][col] = type;
                             grid[row][col].specialType = specialType;
                             transformTotal++;
                         }
@@ -953,6 +936,7 @@ MatchResult Match3Engine::getComboMatchResult(int row1, int col1, int row2, int 
                         int index = grid[row][col].type;
                         if (specialIndexMap[{index, SpecialType::WRAPPED}] == type
                             && grid[row][col].specialType == SpecialType::NONE) {
+                            grid[row][col].type = type;
                             grid[row][col].specialType = SpecialType::WRAPPED;
                             transformTotal++;
                         }
