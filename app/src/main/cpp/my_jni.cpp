@@ -323,7 +323,16 @@ jobject loadGame(JNIEnv *env, jobject thiz, jstring filePath) {
         env->SetIntArrayRegion(jArray, 0, len, (const jint*)p.highScores.data());
     }
 
-    return create_jni_object(env, JniType::PLAYER_PROGRESS, p.reachedLevel, jArray, p.lastUpdated);
+    jobject obj = create_jni_object(env, JniType::PLAYER_PROGRESS, p.reachedLevel, jArray, p.lastUpdated);
+    jfieldID musicFieldID = env->GetFieldID(g_jni_map.find(JniType::PLAYER_PROGRESS)->second.clazz, "isMusicEnabled", "Z");
+    jfieldID sfxFieldID = env->GetFieldID(g_jni_map.find(JniType::PLAYER_PROGRESS)->second.clazz, "isSfxEnabled", "Z");
+    jfieldID volumeFieldID = env->GetFieldID(g_jni_map.find(JniType::PLAYER_PROGRESS)->second.clazz, "volume", "F");
+
+    env->SetBooleanField(obj, musicFieldID, p.musicEnabled);
+    env->SetBooleanField(obj, sfxFieldID, p.sfxEnabled);
+    env->SetFloatField(obj, volumeFieldID, p.volume);
+
+    return obj;
 }
 
 void onUpdatePlayerProgress(JNIEnv *env, jobject thiz, jboolean isWin, jint levelId, jint score) {
@@ -344,6 +353,10 @@ jobjectArray getRemovedCells(JNIEnv *env, jobject thiz) {
         env->DeleteLocalRef(item);
     }
     return array;
+}
+
+void updateSettings(JNIEnv *env, jobject thiz, bool isMusicEnable, bool isSfxEnable, float volume) {
+    _updateSettings(isMusicEnable, isSfxEnable, volume);
 }
 
 static JNINativeMethod method_table[] = {
@@ -377,7 +390,8 @@ static JNINativeMethod method_table[] = {
         {"nativeGetTotalScore", "()I", (void*)getTotalScore},
         {"nativeLoadGame", "(Ljava/lang/String;)Lcom/tuananh/match3/bridge/PlayerProgress;", (void*)loadGame},
         {"nativeOnUpdatePlayerProgress", "(ZII)V", (void*)onUpdatePlayerProgress},
-        {"nativeGetRemovedCells", "()[Lcom/tuananh/match3/bridge/Cell;", (void*)getRemovedCells}
+        {"nativeGetRemovedCells", "()[Lcom/tuananh/match3/bridge/Cell;", (void*)getRemovedCells},
+        {"nativeUpdateSettings", "(ZZF)V", (void*) updateSettings}
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {

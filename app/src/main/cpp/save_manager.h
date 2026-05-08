@@ -8,6 +8,9 @@ struct PlayerProgress {
     int reachedLevel;
     vector<int> highScores;
     long long lastUpdated;
+    bool musicEnabled;
+    bool sfxEnabled;
+    float volume;
 };
 
 std::string savePath;
@@ -35,6 +38,10 @@ void saveGame(PlayerProgress data) {
 
         toggleEncryption(reinterpret_cast<char*>(&data.lastUpdated), sizeof(long long));
         outFile.write(reinterpret_cast<const char*>(&data.lastUpdated), sizeof(long long));
+
+        outFile.write(reinterpret_cast<const char*>(&data.musicEnabled), sizeof(bool));
+        outFile.write(reinterpret_cast<const char*>(&data.sfxEnabled), sizeof(bool));
+        outFile.write(reinterpret_cast<const char*>(&data.volume), sizeof(float));
 
         outFile.close();
         printf("Saved & Encrypted!");
@@ -65,10 +72,17 @@ PlayerProgress _loadGame(const std::string& filePath) {
         inFile.read(reinterpret_cast<char*>(&data.lastUpdated), sizeof(long long));
         toggleEncryption(reinterpret_cast<char*>(&data.lastUpdated), sizeof(long long));
 
+        inFile.read(reinterpret_cast<char*>(&data.musicEnabled), sizeof(bool));
+        inFile.read(reinterpret_cast<char*>(&data.sfxEnabled), sizeof(bool));
+        inFile.read(reinterpret_cast<char*>(&data.volume), sizeof(float));
+
         inFile.close();
     } else {
         data.reachedLevel = 1;
         data.highScores.resize(9000);
+        data.musicEnabled = true;
+        data.sfxEnabled = true;
+        data.volume = 1;
         for(int i=0; i < 9000; i++) {
             data.highScores[i] = 0;
         }
@@ -89,5 +103,13 @@ void _onUpdatePlayerProgress(bool isWin, int levelId, int score) {
 
     data.lastUpdated = time(0);
 
+    saveGame(data);
+}
+
+void _updateSettings(bool isMusicEnable, bool isSfxEnable, float volume) {
+    PlayerProgress data = _loadGame(savePath);
+    data.musicEnabled = isMusicEnable;
+    data.sfxEnabled = isSfxEnable;
+    data.volume = volume;
     saveGame(data);
 }
