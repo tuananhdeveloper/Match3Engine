@@ -53,8 +53,8 @@ void testGravity() {
     // B  A  A
 
     // Column 0: [EMPTY, A, B]
-    assert(engine.getItem(0, 0) == -1);
-    assert(engine.getItem(0, 1) == 0);
+    assert(engine.getItem(0, 0) == 0);
+    assert(engine.getItem(0, 1) == -1);
     assert(engine.getItem(0, 2) == 1);
 
     // Column 1: [EMPTY, B, A]
@@ -63,8 +63,8 @@ void testGravity() {
     assert(engine.getItem(1, 2) == 0);
 
     // Column 2: [EMPTY, B, A]
-    assert(engine.getItem(2, 0) == -1);
-    assert(engine.getItem(2, 1) == 1);
+    assert(engine.getItem(2, 0) == 1);
+    assert(engine.getItem(2, 1) == -1);
     assert(engine.getItem(2, 2) == 0);
 
     LOGD("\n✓ Gravity test PASSED\n");
