@@ -812,6 +812,7 @@ optional<Move> Match3Engine::findHint() {
 void Match3Engine::reset() {
     this->grid = originalGrid;
     this->totalScore = 0;
+    this->removedCells.clear();
 }
 
 void Match3Engine::setHoleItemId(int id) {
