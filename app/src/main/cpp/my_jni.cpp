@@ -369,15 +369,15 @@ static JNINativeMethod method_table[] = {
         {"nativeHasValidMoves", "()Z", (void*)hasValidMoves},
         {"nativeShuffle", "()V", (void*)shuffleGrid},
         {"nativeCountValidMoves", "()I", (void*)countValidMoves},
-        {"nativeFindHint", "()Lcom/lazycatstudio/coffeematch3/bridge/Move;", (void*)findHint},
-        {"nativeDetectPatternAt", "(II)Lcom/lazycatstudio/coffeematch3/bridge/MatchResult;", (void*)detectPatternAt},
+        {"nativeFindHint", "()Lcom/tinybytelabs/coffeematch3/bridge/Move;", (void*)findHint},
+        {"nativeDetectPatternAt", "(II)Lcom/tinybytelabs/coffeematch3/bridge/MatchResult;", (void*)detectPatternAt},
         {"nativeAnalyzeMatchPattern", "(IIIIII)I", (void*)analyzeMatchPattern},
-        {"nativeSpawnSpecialCell", "(Lcom/lazycatstudio/coffeematch3/bridge/MatchResult;)V", (void*)spawnSpecialCell},
+        {"nativeSpawnSpecialCell", "(Lcom/tinybytelabs/coffeematch3/bridge/MatchResult;)V", (void*)spawnSpecialCell},
         {"nativeGetSpecialType", "(II)I", (void*)getSpecialType},
         {"nativeCountConsecutive", "(IIIII)I", (void*) countConsecutive},
         {"nativeIsLPattern", "(IIIIII)Z", (void*)isLPattern},
         {"nativeIsTPattern", "(IIIIII)Z", (void*)isTPattern},
-        {"nativeFindAllMatchesWithPatterns", "()[Lcom/lazycatstudio/coffeematch3/bridge/MatchResult;", (void*)findAllMatchesWithPatterns},
+        {"nativeFindAllMatchesWithPatterns", "()[Lcom/tinybytelabs/coffeematch3/bridge/MatchResult;", (void*)findAllMatchesWithPatterns},
         {"nativeProcessCascadeWithSpecials", "()I", (void*)processCascadeWithSpecials},
         {"nativeSwap", "(IIII)Z", (void*)swapCells},
         {"nativeSwapCollectEvents", "(IIII[I)I", (void*)swapCollectEvents},
@@ -385,12 +385,12 @@ static JNINativeMethod method_table[] = {
         {"nativeReset", "()V", (void*)reset},
         {"nativeSetHoleItemId", "(I)V", (void*)setHoleItemId},
         {"nativeSetSpecialTypeMap", "([I[II)V", (void*)setSpecialTypeMap},
-        {"nativeSetSpecialIndexMap", "([Lcom/lazycatstudio/coffeematch3/bridge/Pair;[II)V", (void*)setSpecialIndexMap},
+        {"nativeSetSpecialIndexMap", "([Lcom/tinybytelabs/coffeematch3/bridge/Pair;[II)V", (void*)setSpecialIndexMap},
         {"nativeUpdateBasePoint", "(II)V", (void*)updateBasePoint},
         {"nativeGetTotalScore", "()I", (void*)getTotalScore},
-        {"nativeLoadGame", "(Ljava/lang/String;)Lcom/lazycatstudio/coffeematch3/bridge/PlayerProgress;", (void*)loadGame},
+        {"nativeLoadGame", "(Ljava/lang/String;)Lcom/tinybytelabs/coffeematch3/bridge/PlayerProgress;", (void*)loadGame},
         {"nativeOnUpdatePlayerProgress", "(ZII)V", (void*)onUpdatePlayerProgress},
-        {"nativeGetRemovedCells", "()[Lcom/lazycatstudio/coffeematch3/bridge/Cell;", (void*)getRemovedCells},
+        {"nativeGetRemovedCells", "()[Lcom/tinybytelabs/coffeematch3/bridge/Cell;", (void*)getRemovedCells},
         {"nativeUpdateSettings", "(ZZF)V", (void*) updateSettings}
 };
 
@@ -398,18 +398,18 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     JNIEnv* env;
     if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
 
-    register_jni_type(env, JniType::MOVE, "com/lazycatstudio/coffeematch3/bridge/Move", "<init>", "(IIII)V");
+    register_jni_type(env, JniType::MOVE, "com/tinybytelabs/coffeematch3/bridge/Move", "<init>", "(IIII)V");
     register_jni_type(env, JniType::INIT_SET, "java/util/HashSet", "<init>", "()V");
     register_jni_type(env, JniType::ADD_SET, "java/util/HashSet", "add", "(Ljava/lang/Object;)Z");
     register_jni_type(env, JniType::INTEGER, "java/lang/Integer", "<init>", "(I)V");
-    register_jni_type(env, JniType::PAIR, "com/lazycatstudio/coffeematch3/bridge/Pair", "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
-    register_jni_type(env, JniType::MATCH_RESULT, "com/lazycatstudio/coffeematch3/bridge/MatchResult", "<init>",
-                      "(ILjava/util/Set;Lcom/lazycatstudio/coffeematch3/bridge/Pair;I)V");
-    register_jni_type(env, JniType::PLAYER_PROGRESS, "com/lazycatstudio/coffeematch3/bridge/PlayerProgress", "<init>", "(I[IJ)V");
-    register_jni_type(env, JniType::CELL, "com/lazycatstudio/coffeematch3/bridge/Cell", "<init>", "(I)V");
+    register_jni_type(env, JniType::PAIR, "com/tinybytelabs/coffeematch3/bridge/Pair", "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
+    register_jni_type(env, JniType::MATCH_RESULT, "com/tinybytelabs/coffeematch3/bridge/MatchResult", "<init>",
+                      "(ILjava/util/Set;Lcom/tinybytelabs/coffeematch3/bridge/Pair;I)V");
+    register_jni_type(env, JniType::PLAYER_PROGRESS, "com/tinybytelabs/coffeematch3/bridge/PlayerProgress", "<init>", "(I[IJ)V");
+    register_jni_type(env, JniType::CELL, "com/tinybytelabs/coffeematch3/bridge/Cell", "<init>", "(I)V");
     const char* classNames[] = {
-            "com/lazycatstudio/coffeematch3/lwjgl3/DesktopNativeEngine",
-            "com/lazycatstudio/coffeematch3/android/AndroidNativeEngine"
+            "com/tinybytelabs/coffeematch3/lwjgl3/DesktopNativeEngine",
+            "com/tinybytelabs/coffeematch3/android/AndroidNativeEngine"
     };
 
     for (int i = 0; i < 2; i++) {
