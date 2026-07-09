@@ -4,13 +4,14 @@
 #ifdef __ANDROID__
 #include <android_native_app_glue.h>
 #endif
-#include "match3_engine.h"
 #include <iostream>
 #include <cassert>
 #define LOG_TAG "MyAppTag"
 #ifdef __ANDROID__
 #include <android/log.h>
-    #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#include "../../../../match3-engine-sdk/src/main/cpp/match3_engine.h"
+
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 #else
 #include <iostream>
 #define LOGD(...) printf(__VA_ARGS__); printf("\n")

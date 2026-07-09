@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.library")
+    alias(libs.plugins.android.application)
 }
 
 android {
@@ -7,7 +7,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        minSdk 21
+        minSdk 24
         targetSdk 36
         versionCode 1
         versionName "1.0"
@@ -34,4 +34,5 @@ android {
 }
 
 dependencies {
+    implementation(project(":match3-engine-sdk"))
 }

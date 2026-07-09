@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Match3Engine"
 include ':app'
+include ':match3-engine-sdk'

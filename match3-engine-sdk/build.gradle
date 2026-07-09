@@ -1,0 +1,186 @@
+plugins {
+    alias(libs.plugins.android.library)
+}
+
+android {
+    namespace 'com.tuananh.match3_engine_sdk'
+    compileSdk {
+        version = release(36) {
+            minorApiLevel = 1
+        }
+    }
+
+    defaultConfig {
+        minSdk 24
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags ""
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+tasks.register('exportMatch3ToNative', Copy) {
+    group = 'custom'
+    description = 'Export compiled Match3 .so release libraries to build folder'
+
+    // Xác định đối tượng File cho thư mục đích
+    def desktopDir = file("src/main/cpp/build_native")
+
+    // Hành động chạy trước khi copy: Kiểm tra và tự tạo thư mục nếu chưa có
+    doFirst {
+        if (!desktopDir.exists()) {
+            println "--> Thư mục build_native chưa tồn tại. Đang tự động tạo mới..."
+            desktopDir.mkdirs()
+        }
+    }
+
+    // 1. Trỏ vào thư mục chứa file .so gốc của bạn
+    from(layout.buildDirectory.dir("intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib")) {
+        include "**/*.so"
+    }
+
+    // 2. Đưa vào thư mục đích đã khai báo ở trên
+    into(desktopDir)
+
+    // 3. Giữ nguyên cấu trúc thư mục chip (arm64-v8a,...)
+    eachFile { fileDetails ->
+        def parts = fileDetails.relativePath.segments
+        if (parts.length >= 2) {
+            def abi = parts[0]
+            fileDetails.relativePath = new RelativePath(true, abi, fileDetails.name)
+        }
+    }
+    includeEmptyDirs = false
+}
+
+// 4. Giữ nguyên logic kích hoạt tự động sau khi merge xong bản Release
+afterEvaluate {
+    if (tasks.findByName('mergeReleaseNativeLibs')) {
+        tasks.named('mergeReleaseNativeLibs').configure {
+            finalizedBy tasks.named('exportMatch3ToNative')
+        }
+    }
+}
+
+tasks.register("buildDesktopLib", Exec) {
+    group = "native_build"
+    description = "Tự động nhận diện Hệ điều hành và biên dịch thư viện C++ cho Desktop tương ứng"
+
+    var buildDir = file("src/main/cpp/build_desktop")
+
+    doFirst {
+        if (!buildDir.exists()) {
+            buildDir.mkdirs()
+        }
+    }
+
+    workingDir = buildDir
+
+    var osName = System.getProperty("os.name").toLowerCase()
+    if (osName.contains("win")) {
+        commandLine("cmd", "/c", "cmake .. -G \"MinGW Makefiles\" && cmake --build . --config Release")
+        doLast {
+            println("🎉 BUILD SUCCESS: File .dll cho Windows đã được tạo!")
+            println("📍 Vị trí: ${buildDir.absolutePath}/libprocedural_map_engine.dll")
+        }
+    }
+    else if(osName.contains("mac")) {
+        commandLine("sh", "-c", "cmake .. -DCMAKE_OSX_ARCHITECTURES=\"arm64;x86_64\" && cmake --build . --config Release")
+        doLast {
+            println("🎉 BUILD SUCCESS: File .dylib cho macOS đã được tạo!")
+            println("📍 Vị trí: ${buildDir.absolutePath}/libprocedural_map_engine.dylib")
+        }
+    }
+    else { // Linux / Unix Desktop
+        commandLine("sh", "-c", "cmake .. && cmake --build . --config Release")
+        doLast {
+            println("🎉 BUILD SUCCESS: File .so cho Linux Desktop đã được tạo!")
+            println("📍 Vị trí: ${buildDir.absolutePath}/libprocedural_map_engine.so")
+        }
+    }
+}
+
+tasks.register("exportDesktopJar", Jar) {
+    group = "unbundle"
+    description = "Tự động gom file native từ build_desktop và đóng gói kèm class thành file .jar"
+
+    archiveBaseName.set("match3-engine-sdk")
+    archiveVersion.set("1.0.0")
+
+    // Đảm bảo task biên dịch Release chạy trước
+    def compileReleaseJava = tasks.compileReleaseJavaWithJavac
+    dependsOn(compileReleaseJava)
+
+    // Lấy class từ bản Release
+    from(compileReleaseJava.destinationDirectory)
+
+    var buildDesktopDir = file("src/main/cpp/build_desktop")
+    if (buildDesktopDir.exists()) {
+        from(buildDesktopDir) {
+            include("*.dylib")
+            into("darwin-aarch64")
+        }
+        from(buildDesktopDir) {
+            include("*.dylib")
+            into("darwin-x86-64")
+        }
+        from(buildDesktopDir) {
+            include("*.dll")
+            into("win32-x86-64")
+        }
+        from(buildDesktopDir) {
+            include("*.so")
+            into("linux-x86-64")
+        }
+        into('arm64-v8a') {
+            from file("$buildDesktopDir/arm64-v8a")
+            include '*.so'
+        }
+        into('armeabi-v7a') {
+            from file("$buildDesktopDir/armeabi-v7a")
+            include '*.so'
+        }
+        into('x86') {
+            from file("$buildDesktopDir/x86")
+            include '*.so'
+        }
+        into('x86_64') {
+            from file("$buildDesktopDir/x86_64")
+            include '*.so'
+        }
+    }
+    else {
+        println("🚨 LỖI: Không tìm thấy file .dylib/.dll nào tại: $buildDesktopDir. Hãy build C++ trước!")
+        return
+    }
+
+    destinationDirectory.set(rootProject.file("build/outputs/jar"))
+
+    doLast {
+        println("--------------------------------------------------------")
+        println("🎉 TỰ ĐỘNG GOM NATIVE VÀ ĐÓNG GÓI JAR THÀNH CÔNG!")
+        println("📍 Vị trí file: ${destinationDirectory.get().asFile.absolutePath}/${archiveFileName.get()}")
+        println("--------------------------------------------------------")
+    }
+}
+
+dependencies {
+    implementation libs.appcompat
+    implementation libs.material
+    testImplementation libs.junit
+    androidTestImplementation libs.espresso.core
+    androidTestImplementation libs.ext.junit
+}

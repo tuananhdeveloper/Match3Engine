@@ -1,38 +1,45 @@
 cmake_minimum_required(VERSION 3.22.1)
-
 project("match3engine")
 
 set(CMAKE_CXX_STANDARD 17)
 
-if(NOT ANDROID)
-    find_package(JNI REQUIRED)
-endif()
+# 1. Định nghĩa đường dẫn tới thư mục chứa code của module SDK
+set(ENGINE_SDK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../../../../match3-engine-sdk/src/main/cpp")
 
-set(SOURCE_FILES
-        match3_engine.cpp
-        main.cpp
-        my_jni.cpp
-)
+# 2. Thêm tất cả các file .cpp của SDK vào danh sách biên dịch của thư viện SHARED
+if (ANDROID)
+    add_library(${CMAKE_PROJECT_NAME} SHARED
+            ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
+            main.cpp
+            ${ENGINE_SDK_SRC}/match3_engine.cpp
+    )
+else ()
+    add_library(${CMAKE_PROJECT_NAME} SHARED
+            ${ENGINE_SDK_SRC}/match3_engine.cpp
+    )
+endif ()
 
-if(ANDROID)
-    set(NATIVE_APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue)
-    list(APPEND SOURCE_FILES ${NATIVE_APP_GLUE_DIR}/android_native_app_glue.c)
-endif()
 
-add_library(${CMAKE_PROJECT_NAME} SHARED ${SOURCE_FILES})
+# 3. Giữ nguyên include đường dẫn header
 
-if(ANDROID)
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${NATIVE_APP_GLUE_DIR})
-else()
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${JNI_INCLUDE_DIRS})
-endif()
+if (ANDROID)
+        target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+                ${ANDROID_NDK}/sources/android/native_app_glue
+                ${ENGINE_SDK_SRC}
+        )
+else ()
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+            ${JNI_INCLUDE_DIRS}
+            ${ENGINE_SDK_SRC}
+    )
+endif ()
 
-if(ANDROID)
+if (ANDROID)
     target_link_libraries(${CMAKE_PROJECT_NAME}
             android
             log
     )
-else()
+else ()
     target_link_libraries(${CMAKE_PROJECT_NAME} ${JNI_LIBRARIES})
 
     if(WIN32)
