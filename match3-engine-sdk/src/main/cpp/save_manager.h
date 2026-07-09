@@ -111,5 +111,6 @@ void _updateSettings(bool isMusicEnable, bool isSfxEnable, float volume) {
     data.musicEnabled = isMusicEnable;
     data.sfxEnabled = isSfxEnable;
     data.volume = volume;
+    data.lastUpdated = time(0);
     saveGame(data);
 }
